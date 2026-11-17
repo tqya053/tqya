@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "Daily Tracker",
+    "slug": "daily-tracker",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.dailytracker.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#4F46E5",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.dailytracker.app",
+      "versionCode": 1,
+      "softwareKeyboardLayoutMode": "resize"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "output": "single",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-sharing",
+      [
+        "expo-document-picker",
+        {}
+      ],
+      "@react-native-community/datetimepicker",
+      "expo-splash-screen",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#F4F5F8",
+          "dark": {
+            "image": "./assets/splash-icon.png",
+            "backgroundColor": "#0B0E14"
+          }
+        }
+      ]
+    ],
+    "scheme": "dailytracker",
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}

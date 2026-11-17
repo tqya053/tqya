@@ -1,0 +1,99 @@
+name: Android APK
+
+# Builds an installable release APK on GitHub's servers (no Expo account needed).
+# - Every push: runs tests, builds the APK, uploads it as a workflow artifact.
+# - Pushing a tag like v1.0.0: also publishes a GitHub Release with the APK attached.
+#
+# Signing: set repository secrets ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD,
+# ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD to sign with your own key (required so
+# users can install future versions as updates). Without them the APK is signed with
+# a throwaway debug key: it installs fine, but later builds cannot update it in place.
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm test
+      - run: npm run test:tz
+
+  apk:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+
+      - run: npm ci
+      - name: Generate native Android project
+        run: npx expo prebuild --platform android --no-install --clean
+      - name: Build release APK
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a,x86_64
+
+      - name: Sign with release key (if configured)
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          VERSION=$(node -p "require('./app.json').expo.version")
+          OUT="DailyTracker-v${VERSION}.apk"
+          if [ -n "$KEYSTORE_B64" ]; then
+            BT=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)
+            echo "$KEYSTORE_B64" | base64 -d > release.keystore
+            "$ANDROID_HOME/build-tools/$BT/zipalign" -f -p 4 "$APK" aligned.apk
+            "$ANDROID_HOME/build-tools/$BT/apksigner" sign --ks release.keystore \
+              --ks-pass env:KEYSTORE_PASSWORD --ks-key-alias "$KEY_ALIAS" --key-pass env:KEY_PASSWORD \
+              --out "$OUT" aligned.apk
+            rm release.keystore aligned.apk
+            echo "Signed with release key"
+          else
+            cp "$APK" "$OUT"
+            echo "::warning::No release keystore secrets set - APK is signed with a debug key."
+          fi
+          echo "APK_FILE=$OUT" >> "$GITHUB_ENV"
+          ls -la "$OUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DailyTracker-apk
+          path: ${{ env.APK_FILE }}
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.APK_FILE }}
+          generate_release_notes: true
