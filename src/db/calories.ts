@@ -4,6 +4,7 @@ import type { CalorieEntry, DB } from './types';
 
 export interface CalorieInput {
   calories: number;
+  description?: string | null;
   date: DateKey;
   time: string;
 }
@@ -13,12 +14,16 @@ function validate(e: CalorieInput) {
   if (e.calories > 50_000) throw new Error('That is a lot of calories — please check the number');
   if (!isValidDateKey(e.date)) throw new Error('Invalid date');
   if (!isValidTimeKey(e.time)) throw new Error('Invalid time');
+  const d = (e.description ?? '').trim();
+  if (d.length > 120) throw new Error('Description is too long');
+  return d || null;
 }
 
 export async function addCalorieEntry(db: DB, e: CalorieInput): Promise<number> {
-  validate(e);
-  const res = await db.runAsync('INSERT INTO calorie_entries (calories, date, time) VALUES (?, ?, ?)', [
+  const description = validate(e);
+  const res = await db.runAsync('INSERT INTO calorie_entries (calories, description, date, time) VALUES (?, ?, ?, ?)', [
     e.calories,
+    description,
     e.date,
     e.time,
   ]);
@@ -26,9 +31,10 @@ export async function addCalorieEntry(db: DB, e: CalorieInput): Promise<number> 
 }
 
 export async function updateCalorieEntry(db: DB, id: number, e: CalorieInput): Promise<void> {
-  validate(e);
-  await db.runAsync('UPDATE calorie_entries SET calories = ?, date = ?, time = ? WHERE id = ?', [
+  const description = validate(e);
+  await db.runAsync('UPDATE calorie_entries SET calories = ?, description = ?, date = ?, time = ? WHERE id = ?', [
     e.calories,
+    description,
     e.date,
     e.time,
     id,

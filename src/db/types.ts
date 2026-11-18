@@ -18,6 +18,7 @@ export type SQLParam = string | number | null;
 export interface DailyTask {
   id: number;
   name: string;
+  description?: string | null;
   created_date: DateKey;
   archived_date: DateKey | null;
   sort_order: number;
@@ -32,6 +33,7 @@ export interface DailyTaskLog {
 export interface OneTimeTask {
   id: number;
   title: string;
+  description?: string | null;
   date: DateKey;
   completed: number; // 0 | 1
   completed_at: string | null;
@@ -43,6 +45,7 @@ export interface DayTask {
   kind: 'daily' | 'once';
   id: number;
   title: string;
+  description: string | null;
   completed: boolean;
 }
 
@@ -75,6 +78,7 @@ export interface ExpenseWithCategory extends Expense {
 export interface CalorieEntry {
   id: number;
   calories: number;
+  description: string | null;
   date: DateKey;
   time: string;
   created_at: string;

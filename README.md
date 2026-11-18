@@ -11,12 +11,12 @@ Built with **Expo SDK 58 · React Native 0.88 · TypeScript · expo-router · ex
 | Area | What you can do |
 | --- | --- |
 | **Home** | Today's date, task completion ring (% done, completed / remaining), today's spending (vs. yesterday), calories vs. goal, quick-add buttons for expense / calories / task, a written summary of the day, and the next tasks to tick off. |
-| **Tasks** | *Every-day* (permanent) tasks that appear daily and reset automatically each new day, and *one-time* tasks bound to a date. Add, rename, delete, complete, browse any day (← → or date picker). History is kept per day. Insights: completed vs. incomplete stacked bars, completion % trend, daily / weekly / monthly. |
+| **Tasks** | *Every-day* (permanent) tasks that appear daily and reset automatically each new day, and *one-time* tasks bound to a date. Each task can have an optional description, shown when you tap the task. Add, rename, delete, complete, browse any day (← → or date picker). History is kept per day. Insights: completed vs. incomplete stacked bars, completion % trend, daily / weekly / monthly. |
 | **Expenses** | Three-step entry: amount → category → Confirm. 8 default categories plus your own (add / rename / delete). "Other" asks for a description. Every record stores amount, category, optional note, date and time. History with filters (all, today, this week, this month, any day) and per-day totals; tap any entry to edit or delete it. Insights: spending per day / week / month, category donut, period comparison, total and average daily spend. |
-| **Calories** | Type a number → Confirm (presets for one-tap entry). Today's total vs. an adjustable daily goal, history per day, edit / delete, charts with the goal line, and a 30-day goal check. |
+| **Calories** | Type a number → Confirm (presets for one-tap entry). Optionally tag the entry: Breakfast, Lunch, Dinner, Snack, Drink, or your own text. Today's total vs. an adjustable daily goal, history per day, edit / delete, charts with the goal line, and a 30-day goal check. |
 | **Statistics** | One page for every report: completion rate today / this week / this month, task trends, most consistent tasks (with streaks), spending trends, category breakdown, this-period vs. last-period comparison, and calorie trends against your goal. One switch sets daily / weekly / monthly for every chart. |
 | **Languages** | **Arabic (العربية)** and English, with a full right-to-left layout in Arabic. All screens, dates, times, chart labels, default category names and error messages are translated. Choose *Phone language*, *العربية* or *English* in Settings. |
-| **Settings** | Language, light / dark / system theme, calorie goal, currency symbol, category manager, **JSON backup export / restore**, and **reset all data** (double confirmation). |
+| **Settings** | Language, light / dark / system theme, calorie goal, currency (₪ shekel, $ dollar, or any symbol), category manager, **JSON backup export / restore**, and **reset all data** (double confirmation). |
 
 All charts are tappable. Tap a bar or point to show that day, week or month. They refresh automatically after any add, edit or delete.
 
@@ -63,12 +63,12 @@ tests/                    Jest tests against a real SQLite engine (node:sqlite)
 
 ```sql
 settings          (key TEXT PK, value TEXT)                      -- calorieGoal, currency, theme
-daily_tasks       (id PK, name, created_date, archived_date NULL, sort_order, created_at)
+daily_tasks       (id PK, name, description NULL, created_date, archived_date NULL, sort_order, created_at)
 daily_task_logs   (task_id FK, date, completed_at, PK(task_id, date))
-one_time_tasks    (id PK, title, date, completed 0/1, completed_at, created_at)
+one_time_tasks    (id PK, title, description NULL, date, completed 0/1, completed_at, created_at)
 expense_categories(id PK, name NOCASE, icon, color, is_other 0/1, sort_order, archived 0/1)
 expenses          (id PK, amount_cents INT > 0, category_id FK, description NULL, date, time, created_at)
-calorie_entries   (id PK, calories INT > 0, date, time, created_at)
+calorie_entries   (id PK, calories INT > 0, description NULL, date, time, created_at)
 -- indexes on every date column
 ```
 
@@ -87,7 +87,7 @@ Design decisions:
 
 ```bash
 npm install
-npm test              # 37 tests: CRUD, daily reset, history, stats, backup/restore, persistence, Arabic coverage
+npm test              # 41 tests: CRUD, daily reset, history, stats, backup/restore, persistence, Arabic coverage
 npm run test:tz       # same tests under America/New_York and Asia/Tokyo
 npm run typecheck
 npx expo start        # then press "a" for Android (needs a development build; see below)

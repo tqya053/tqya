@@ -66,10 +66,10 @@ describe('permanent daily tasks', () => {
     await setDailyTaskCompleted(db, id, D1, true);
 
     const day1 = await getTasksForDay(db, D1);
-    expect(day1.daily).toEqual([{ kind: 'daily', id, title: 'Workout', completed: true }]);
+    expect(day1.daily).toEqual([{ kind: 'daily', id, title: 'Workout', description: null, completed: true }]);
     // Next day: same task appears, not completed (automatic reset)
     const day2 = await getTasksForDay(db, D2);
-    expect(day2.daily).toEqual([{ kind: 'daily', id, title: 'Workout', completed: false }]);
+    expect(day2.daily).toEqual([{ kind: 'daily', id, title: 'Workout', description: null, completed: false }]);
     // Not shown before it was created
     expect((await getTasksForDay(db, '2026-02-28')).daily).toHaveLength(0);
     // History of day 1 is untouched by day 2
@@ -302,5 +302,53 @@ describe('persistence', () => {
     expect((await exportData(second)).data).toEqual(snapshot);
     second.close();
     fs.rmSync(dir, { recursive: true, force: true });
+  });
+});
+
+describe('descriptions (v2)', () => {
+  it('tasks keep an optional description; edits can change or keep it', async () => {
+    const d = await addDailyTask(db, 'Workout', D1, '  30 min run + stretching ');
+    const o = await addOneTimeTask(db, 'Dentist', D1, 'Bring insurance card');
+    let day = await getTasksForDay(db, D1);
+    expect(day.daily[0].description).toBe('30 min run + stretching');
+    expect(day.once[0].description).toBe('Bring insurance card');
+    await renameDailyTask(db, d, 'Run'); // description kept
+    await updateOneTimeTask(db, o, 'Dentist', D1, '  '); // cleared
+    day = await getTasksForDay(db, D1);
+    expect(day.daily[0]).toMatchObject({ title: 'Run', description: '30 min run + stretching' });
+    expect(day.once[0].description).toBeNull();
+    await expect(addOneTimeTask(db, 'x', D1, 'a'.repeat(501))).rejects.toThrow('too long');
+  });
+
+  it('calorie entries keep an optional meal description', async () => {
+    const id = await addCalorieEntry(db, { calories: 450, description: ' Breakfast ', date: D1, time: '08:00' });
+    await addCalorieEntry(db, { calories: 200, date: D1, time: '16:00' });
+    const [snack, breakfast] = await listCalorieEntries(db, D1, D1);
+    expect(breakfast.description).toBe('Breakfast');
+    expect(snack.description).toBeNull();
+    await updateCalorieEntry(db, id, { calories: 500, description: 'Lunch', date: D1, time: '12:00' });
+    expect((await listCalorieEntries(db, D1, D1))[1]).toMatchObject({ calories: 500, description: 'Lunch' });
+  });
+
+  it('upgrades an existing v1 database without losing data', async () => {
+    const old = openTestDb();
+    await migrate(old, 1); // the schema shipped in v1.0/1.1
+    await old.runAsync('INSERT INTO daily_tasks (name, created_date) VALUES (?, ?)', ['Read', D1]);
+    await old.runAsync('INSERT INTO calorie_entries (calories, date, time) VALUES (?, ?, ?)', [600, D1, '12:00']);
+    await migrate(old);
+    const v = await old.getFirstAsync<{ user_version: number }>('PRAGMA user_version', []);
+    expect(v?.user_version).toBe(SCHEMA_VERSION);
+    expect((await getTasksForDay(old, D1)).daily[0]).toMatchObject({ title: 'Read', description: null });
+    expect((await listCalorieEntries(old, D1, D1))[0]).toMatchObject({ calories: 600, description: null });
+    old.close();
+  });
+
+  it('restores a backup made before descriptions existed', async () => {
+    await populate(db);
+    const backup = JSON.parse(JSON.stringify(await exportData(db)));
+    backup.schemaVersion = 1;
+    for (const t of ['daily_tasks', 'one_time_tasks', 'calorie_entries']) for (const r of backup.data[t]) delete r.description;
+    await importData(db, backup);
+    expect((await getTasksForDay(db, D1)).daily[0]).toMatchObject({ title: 'Workout', description: null });
   });
 });

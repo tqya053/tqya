@@ -197,6 +197,7 @@ export function ExpenseForm({
 // ───────────────────────── Calories ─────────────────────────
 
 const CALORIE_PRESETS = [100, 250, 400, 600];
+export const MEALS = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Drink'];
 
 export function CalorieForm({
   existing,
@@ -210,6 +211,7 @@ export function CalorieForm({
   const { colors } = useTheme();
   const { today, mutate } = useAppData();
   const [value, setValue] = useState(existing ? String(existing.calories) : '');
+  const [description, setDescription] = useState(existing?.description ?? '');
   const [when, setWhen] = useState<{ date: DateKey; time?: string }>({
     date: existing?.date ?? today,
     time: existing?.time ?? toTimeKey(new Date()),
@@ -223,6 +225,7 @@ export function CalorieForm({
     setSaving(true);
     const input = {
       calories,
+      description,
       date: existing ? when.date : today,
       time: existing ? when.time! : toTimeKey(new Date()),
     };
@@ -234,7 +237,10 @@ export function CalorieForm({
     setSaving(false);
     if (ok) {
       haptic('success');
-      if (!existing) setValue('');
+      if (!existing) {
+        setValue('');
+        setDescription('');
+      }
       onDone?.();
     }
   };
@@ -257,6 +263,21 @@ export function CalorieForm({
           ))}
         </View>
       )}
+      <View style={{ gap: spacing.sm }}>
+        <Text style={[font.label, { color: colors.textMuted }]}>{t('What did you eat? (optional)')}</Text>
+        <View style={styles.chips}>
+          {MEALS.map((m) => (
+            <Chip
+              key={m}
+              label={t(m)}
+              color={colors.calories}
+              selected={description === t(m)}
+              onPress={() => setDescription(description === t(m) ? '' : t(m))}
+            />
+          ))}
+        </View>
+        <Field placeholder={t('e.g. Chicken salad')} value={description} onChangeText={setDescription} maxLength={120} />
+      </View>
       {existing ? <DateTimeFields date={when.date} time={when.time} today={today} onChange={setWhen} /> : null}
       <Button
         label={calories ? t('Confirm {value}', { value: `${calories} ${t('kcal')}` }) : t('Confirm')}
@@ -272,7 +293,7 @@ export function CalorieForm({
 
 // ───────────────────────── Tasks ─────────────────────────
 
-export type TaskEdit = { kind: 'daily' | 'once'; id: number; title: string; date?: DateKey };
+export type TaskEdit = { kind: 'daily' | 'once'; id: number; title: string; description?: string | null; date?: DateKey };
 
 export function TaskForm({
   existing,
@@ -289,6 +310,7 @@ export function TaskForm({
   const { today, mutate } = useAppData();
   const [kind, setKind] = useState<'daily' | 'once'>(existing?.kind ?? defaultKind);
   const [title, setTitle] = useState(existing?.title ?? '');
+  const [description, setDescription] = useState(existing?.description ?? '');
   const [date, setDate] = useState<DateKey>(existing?.date ?? defaultDate ?? today);
   const [saving, setSaving] = useState(false);
   const canSave = title.trim().length > 0;
@@ -297,16 +319,19 @@ export function TaskForm({
     if (!canSave || saving) return;
     setSaving(true);
     const ok = await mutate(async (db) => {
-      if (existing?.kind === 'daily') await renameDailyTask(db, existing.id, title);
-      else if (existing) await updateOneTimeTask(db, existing.id, title, date);
-      else if (kind === 'daily') await addDailyTask(db, title, today);
-      else await addOneTimeTask(db, title, date);
+      if (existing?.kind === 'daily') await renameDailyTask(db, existing.id, title, description);
+      else if (existing) await updateOneTimeTask(db, existing.id, title, date, description);
+      else if (kind === 'daily') await addDailyTask(db, title, today, description);
+      else await addOneTimeTask(db, title, date, description);
       return true;
     });
     setSaving(false);
     if (ok) {
       haptic('success');
-      if (!existing) setTitle('');
+      if (!existing) {
+        setTitle('');
+        setDescription('');
+      }
       onDone?.();
     }
   };
@@ -339,8 +364,16 @@ export function TaskForm({
         onChangeText={setTitle}
         autoFocus={!existing}
         maxLength={120}
-        returnKeyType="done"
-        onSubmitEditing={save}
+        returnKeyType="next"
+      />
+      <Field
+        label={t('Description (optional)')}
+        placeholder={t('Details, steps or notes — shown when you tap the task')}
+        value={description}
+        onChangeText={setDescription}
+        multiline
+        maxLength={500}
+        style={{ minHeight: 80, textAlignVertical: 'top' }}
       />
       {kind === 'once' && <DateTimeFields date={date} today={today} onChange={(v) => setDate(v.date)} />}
       <Text style={[font.caption, { color: colors.textMuted, marginTop: -spacing.sm }]}>{hint}</Text>

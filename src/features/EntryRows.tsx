@@ -57,7 +57,14 @@ export function CalorieRow({ e, onPress }: { e: CalorieEntry; onPress: () => voi
       <View style={[styles.icon, { backgroundColor: colors.caloriesSoft }]}>
         <Ionicons name="flame" size={18} color={colors.calories} />
       </View>
-      <Text style={[font.body, { color: colors.textMuted, flex: 1 }]}>{formatTime12(e.time)}</Text>
+      <View style={{ flex: 1 }}>
+        {e.description ? (
+          <Text style={[font.body, { color: colors.text }]} numberOfLines={1}>
+            {e.description}
+          </Text>
+        ) : null}
+        <Text style={[e.description ? font.caption : font.body, { color: colors.textMuted }]}>{formatTime12(e.time)}</Text>
+      </View>
       <Text style={[font.heading, { color: colors.text }]}>{formatNumber(e.calories)} {t('kcal')}</Text>
     </Pressable>
   );

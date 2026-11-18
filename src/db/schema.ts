@@ -76,6 +76,12 @@ const MIGRATIONS: string[] = [
   );
   CREATE INDEX IF NOT EXISTS idx_calorie_entries_date ON calorie_entries(date);
   `,
+  // v2: optional descriptions for tasks and calorie entries (e.g. "Breakfast")
+  `
+  ALTER TABLE daily_tasks ADD COLUMN description TEXT;
+  ALTER TABLE one_time_tasks ADD COLUMN description TEXT;
+  ALTER TABLE calorie_entries ADD COLUMN description TEXT;
+  `,
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;
@@ -119,12 +125,12 @@ export async function seedDefaults(db: DB): Promise<void> {
 }
 
 /** Bring the database to the latest schema and make sure defaults exist. */
-export async function migrate(db: DB): Promise<void> {
+export async function migrate(db: DB, upTo: number = MIGRATIONS.length): Promise<void> {
   await db.execAsync('PRAGMA journal_mode = WAL;');
   await db.execAsync('PRAGMA foreign_keys = ON;');
   const row = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version', []);
   let version = row?.user_version ?? 0;
-  while (version < MIGRATIONS.length) {
+  while (version < upTo) {
     const sql = MIGRATIONS[version];
     const next = version + 1;
     await db.withTransactionAsync(async () => {

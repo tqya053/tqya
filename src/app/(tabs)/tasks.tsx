@@ -147,12 +147,15 @@ export default function TasksScreen() {
                 {options.kind === 'daily' ? t('Repeats every day') : `${t('One-time task')} · ${relativeDayLabel(date, today)}`}
               </Text>
             </Row>
+            {options.description ? (
+              <Text style={[font.body, { color: colors.text, lineHeight: 22 }]}>{options.description}</Text>
+            ) : null}
             <Button
               label={t('Edit')}
               icon="create-outline"
               variant="secondary"
               onPress={() => {
-                setEditing({ kind: options.kind, id: options.id, title: options.title, date });
+                setEditing({ kind: options.kind, id: options.id, title: options.title, description: options.description, date });
                 setOptions(null);
               }}
             />

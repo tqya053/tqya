@@ -27,12 +27,16 @@ function LinkRow({ icon, label, onPress }: { icon: IconName; label: string; onPr
   );
 }
 
+/** One-tap currencies; anything else can be typed under "Other". */
+const QUICK_CURRENCIES = ['₪', '$'];
+
 export default function SettingsScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { db, settings, updateSetting, mutate } = useAppData();
   const [goal, setGoal] = useState(String(settings.calorieGoal));
   const [currency, setCurrency] = useState(settings.currency);
+  const [customCurrency, setCustomCurrency] = useState(false);
   const [busy, setBusy] = useState<null | 'export' | 'import'>(null);
 
   const doExport = async () => {
@@ -143,16 +147,38 @@ export default function SettingsScreen() {
         <Text style={[font.heading, { color: colors.text }]}>{t('Preferences')}</Text>
         <Row style={{ alignItems: 'flex-end' }}>
           <View style={{ flex: 1 }}>
-            <Field label={t('Daily calorie goal (kcal)')} value={goal} onChangeText={(t) => setGoal(t.replace(/\D/g, '').slice(0, 5))} keyboardType="number-pad" />
+            <Field label={t('Daily calorie goal (kcal)')} value={goal} onChangeText={(v) => setGoal(v.replace(/\D/g, '').slice(0, 5))} keyboardType="number-pad" />
           </View>
           <Button label={t('Save')} compact variant="secondary" disabled={Number(goal) === settings.calorieGoal || !Number(goal)} onPress={() => updateSetting('calorieGoal', Number(goal))} style={{ minHeight: 50 }} />
         </Row>
-        <Row style={{ alignItems: 'flex-end' }}>
-          <View style={{ flex: 1 }}>
-            <Field label={t('Currency symbol')} value={currency} onChangeText={setCurrency} maxLength={5} autoCapitalize="characters" placeholder="$" />
-          </View>
-          <Button label={t('Save')} compact variant="secondary" disabled={currency.trim() === settings.currency || !currency.trim()} onPress={() => updateSetting('currency', currency.trim())} style={{ minHeight: 50 }} />
-        </Row>
+        <View style={{ gap: 6 }}>
+          <Text style={[font.label, { color: colors.textMuted }]}>{t('Currency')}</Text>
+          <Segmented<string>
+            options={[
+              { value: '₪', label: `₪ ${t('Shekel')}` },
+              { value: '$', label: `$ ${t('Dollar')}` },
+              { value: 'other', label: t('Other') },
+            ]}
+            value={QUICK_CURRENCIES.includes(settings.currency) && !customCurrency ? settings.currency : 'other'}
+            onChange={(v) => {
+              if (v === 'other') {
+                setCustomCurrency(true);
+                return;
+              }
+              setCustomCurrency(false);
+              setCurrency(v);
+              updateSetting('currency', v);
+            }}
+          />
+        </View>
+        {(customCurrency || !QUICK_CURRENCIES.includes(settings.currency)) && (
+          <Row style={{ alignItems: 'flex-end' }}>
+            <View style={{ flex: 1 }}>
+              <Field label={t('Currency symbol')} value={currency} onChangeText={setCurrency} maxLength={5} autoCapitalize="characters" placeholder="€" />
+            </View>
+            <Button label={t('Save')} compact variant="secondary" disabled={currency.trim() === settings.currency || !currency.trim()} onPress={() => updateSetting('currency', currency.trim())} style={{ minHeight: 50 }} />
+          </Row>
+        )}
         <Divider />
         <LinkRow icon="pricetags-outline" label={t('Expense categories')} onPress={() => router.push('/categories')} />
       </Card>

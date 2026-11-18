@@ -12,6 +12,13 @@ function cleanName(name: string): string {
 
 const nowIso = () => new Date().toISOString();
 
+/** Optional free-text description; empty becomes null. */
+export function cleanDescription(text: string | null | undefined): string | null {
+  const v = (text ?? '').trim();
+  if (v.length > 500) throw new Error('Description is too long');
+  return v || null;
+}
+
 // ───────────────────────── Permanent daily tasks ─────────────────────────
 
 export async function listActiveDailyTasks(db: DB, date: DateKey): Promise<DailyTask[]> {
@@ -22,17 +29,22 @@ export async function listActiveDailyTasks(db: DB, date: DateKey): Promise<Daily
   );
 }
 
-export async function addDailyTask(db: DB, name: string, today: DateKey): Promise<number> {
+export async function addDailyTask(db: DB, name: string, today: DateKey, description?: string | null): Promise<number> {
   const max = await db.getFirstAsync<{ m: number | null }>('SELECT MAX(sort_order) AS m FROM daily_tasks', []);
   const res = await db.runAsync(
-    'INSERT INTO daily_tasks (name, created_date, sort_order) VALUES (?, ?, ?)',
-    [cleanName(name), today, (max?.m ?? -1) + 1],
+    'INSERT INTO daily_tasks (name, description, created_date, sort_order) VALUES (?, ?, ?, ?)',
+    [cleanName(name), cleanDescription(description), today, (max?.m ?? -1) + 1],
   );
   return res.lastInsertRowId;
 }
 
-export async function renameDailyTask(db: DB, id: number, name: string): Promise<void> {
-  await db.runAsync('UPDATE daily_tasks SET name = ? WHERE id = ?', [cleanName(name), id]);
+/** Renames a permanent task; pass `description` to change it too (undefined keeps it). */
+export async function renameDailyTask(db: DB, id: number, name: string, description?: string | null): Promise<void> {
+  if (description === undefined) {
+    await db.runAsync('UPDATE daily_tasks SET name = ? WHERE id = ?', [cleanName(name), id]);
+  } else {
+    await db.runAsync('UPDATE daily_tasks SET name = ?, description = ? WHERE id = ?', [cleanName(name), cleanDescription(description), id]);
+  }
 }
 
 /**
@@ -70,13 +82,32 @@ export async function setDailyTaskCompleted(
 
 // ───────────────────────── One-time tasks ─────────────────────────
 
-export async function addOneTimeTask(db: DB, title: string, date: DateKey): Promise<number> {
-  const res = await db.runAsync('INSERT INTO one_time_tasks (title, date) VALUES (?, ?)', [cleanName(title), date]);
+export async function addOneTimeTask(db: DB, title: string, date: DateKey, description?: string | null): Promise<number> {
+  const res = await db.runAsync('INSERT INTO one_time_tasks (title, description, date) VALUES (?, ?, ?)', [
+    cleanName(title),
+    cleanDescription(description),
+    date,
+  ]);
   return res.lastInsertRowId;
 }
 
-export async function updateOneTimeTask(db: DB, id: number, title: string, date: DateKey): Promise<void> {
-  await db.runAsync('UPDATE one_time_tasks SET title = ?, date = ? WHERE id = ?', [cleanName(title), date, id]);
+export async function updateOneTimeTask(
+  db: DB,
+  id: number,
+  title: string,
+  date: DateKey,
+  description?: string | null,
+): Promise<void> {
+  if (description === undefined) {
+    await db.runAsync('UPDATE one_time_tasks SET title = ?, date = ? WHERE id = ?', [cleanName(title), date, id]);
+  } else {
+    await db.runAsync('UPDATE one_time_tasks SET title = ?, date = ?, description = ? WHERE id = ?', [
+      cleanName(title),
+      date,
+      cleanDescription(description),
+      id,
+    ]);
+  }
 }
 
 export async function deleteOneTimeTask(db: DB, id: number): Promise<void> {
@@ -99,8 +130,8 @@ export async function getOneTimeTask(db: DB, id: number): Promise<OneTimeTask | 
 
 /** Everything that should be shown on a given day. */
 export async function getTasksForDay(db: DB, date: DateKey): Promise<{ daily: DayTask[]; once: DayTask[] }> {
-  const daily = await db.getAllAsync<{ id: number; name: string; done: number }>(
-    `SELECT t.id, t.name, (l.task_id IS NOT NULL) AS done
+  const daily = await db.getAllAsync<{ id: number; name: string; description: string | null; done: number }>(
+    `SELECT t.id, t.name, t.description, (l.task_id IS NOT NULL) AS done
      FROM daily_tasks t
      LEFT JOIN daily_task_logs l ON l.task_id = t.id AND l.date = ?
      WHERE t.created_date <= ? AND (t.archived_date IS NULL OR t.archived_date > ?)
@@ -112,8 +143,8 @@ export async function getTasksForDay(db: DB, date: DateKey): Promise<{ daily: Da
     [date],
   );
   return {
-    daily: daily.map((r) => ({ kind: 'daily', id: r.id, title: r.name, completed: !!r.done })),
-    once: once.map((r) => ({ kind: 'once', id: r.id, title: r.title, completed: !!r.completed })),
+    daily: daily.map((r) => ({ kind: 'daily', id: r.id, title: r.name, description: r.description ?? null, completed: !!r.done })),
+    once: once.map((r) => ({ kind: 'once', id: r.id, title: r.title, description: r.description ?? null, completed: !!r.completed })),
   };
 }
 

@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { haptic, IconButton } from '../components/ui';
 import { setDailyTaskCompleted, setOneTimeTaskCompleted } from '../db/tasks';
@@ -22,6 +22,7 @@ export function TaskRow({
 }) {
   const { colors } = useTheme();
   const { mutate } = useAppData();
+  const [open, setOpen] = useState(false);
   const scale = useRef(new Animated.Value(1)).current;
   const prev = useRef(task.completed);
   useEffect(() => {
@@ -44,11 +45,13 @@ export function TaskRow({
     );
   };
 
+  const hasDescription = !!task.description;
   return (
+    <View>
     <View style={[styles.row, { borderColor: colors.border }]}>
       <Pressable
         onPress={toggle}
-        style={styles.main}
+        hitSlop={8}
         accessibilityRole="checkbox"
         accessibilityState={{ checked: task.completed, disabled }}
         accessibilityLabel={task.title}
@@ -65,6 +68,15 @@ export function TaskRow({
         >
           {task.completed ? <Ionicons name="checkmark" size={16} color={colors.onPrimary} /> : null}
         </Animated.View>
+      </Pressable>
+      {/* Tapping the title shows the description; without one it toggles the task. */}
+      <Pressable
+        onPress={hasDescription ? () => setOpen((o) => !o) : toggle}
+        style={styles.main}
+        accessibilityRole="button"
+        accessibilityLabel={hasDescription ? t('Show description of {name}', { name: task.title }) : task.title}
+        accessibilityState={{ expanded: hasDescription ? open : undefined }}
+      >
         <Text
           style={[
             font.body,
@@ -78,15 +90,25 @@ export function TaskRow({
         >
           {task.title}
         </Text>
+        {hasDescription ? (
+          <Ionicons name={open ? 'chevron-up' : 'document-text-outline'} size={15} color={colors.textMuted} />
+        ) : null}
         {task.kind === 'daily' ? <Ionicons name="repeat" size={14} color={colors.textFaint} /> : null}
       </Pressable>
       {onMore ? <IconButton icon="ellipsis-horizontal" label={t('Options for {name}', { name: task.title })} onPress={onMore} /> : null}
+    </View>
+    {open && hasDescription ? (
+      <View style={[styles.description, { backgroundColor: colors.cardAlt }]}>
+        <Text style={[font.body, { color: colors.textMuted, lineHeight: 21 }]}>{task.description}</Text>
+      </View>
+    ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', minHeight: 52, borderRadius: radius.md },
-  main: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.sm },
+  main: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.sm, paddingStart: spacing.md },
+  description: { marginStart: 38, marginBottom: spacing.sm, padding: spacing.md, borderRadius: radius.sm },
   check: { width: 26, height: 26, borderRadius: 9, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
 });

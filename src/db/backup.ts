@@ -9,12 +9,12 @@ type ColType = 'int' | 'text' | 'text?' | 'date' | 'date?' | 'time';
 /** Column definitions per table, in parent → child insertion order. */
 const TABLE_COLUMNS: Record<string, Record<string, ColType>> = {
   settings: { key: 'text', value: 'text' },
-  daily_tasks: { id: 'int', name: 'text', created_date: 'date', archived_date: 'date?', sort_order: 'int', created_at: 'text' },
+  daily_tasks: { id: 'int', name: 'text', description: 'text?', created_date: 'date', archived_date: 'date?', sort_order: 'int', created_at: 'text' },
   daily_task_logs: { task_id: 'int', date: 'date', completed_at: 'text' },
-  one_time_tasks: { id: 'int', title: 'text', date: 'date', completed: 'int', completed_at: 'text?', created_at: 'text' },
+  one_time_tasks: { id: 'int', title: 'text', description: 'text?', date: 'date', completed: 'int', completed_at: 'text?', created_at: 'text' },
   expense_categories: { id: 'int', name: 'text', icon: 'text', color: 'text', is_other: 'int', sort_order: 'int', archived: 'int' },
   expenses: { id: 'int', amount_cents: 'int', category_id: 'int', description: 'text?', date: 'date', time: 'time', created_at: 'text' },
-  calorie_entries: { id: 'int', calories: 'int', date: 'date', time: 'time', created_at: 'text' },
+  calorie_entries: { id: 'int', calories: 'int', description: 'text?', date: 'date', time: 'time', created_at: 'text' },
 };
 
 const INSERT_ORDER = Object.keys(TABLE_COLUMNS);
