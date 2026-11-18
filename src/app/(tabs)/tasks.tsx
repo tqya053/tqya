@@ -1,3 +1,5 @@
+import { useI18n } from '../../i18n/I18nProvider';
+import { t } from '../../i18n/translate';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
@@ -17,6 +19,7 @@ import { font, spacing, useTheme } from '../../theme';
 export default function TasksScreen() {
   const { colors } = useTheme();
   const { today, mutate } = useAppData();
+  const { rtl } = useI18n();
   const [tab, setTab] = useState<'list' | 'stats'>('list');
   const [date, setDate] = useState<DateKey>(today);
   const [adding, setAdding] = useState<null | 'daily' | 'once'>(null);
@@ -28,30 +31,30 @@ export default function TasksScreen() {
   const all = data ? [...(isFuture ? [] : data.daily), ...data.once] : [];
   const done = all.filter((t) => t.completed).length;
 
-  const confirmDelete = (t: DayTask) => {
+  const confirmDelete = (task: DayTask) => {
     setOptions(null);
     Alert.alert(
-      'Delete task?',
-      t.kind === 'daily'
-        ? `"${t.title}" will stop appearing from today. Past completion history is kept.`
-        : `"${t.title}" will be removed.`,
+      t('Delete task?'),
+      task.kind === 'daily'
+        ? t('"{name}" will stop appearing from today. Past completion history is kept.', { name: task.title })
+        : t('"{name}" will be removed.', { name: task.title }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('Cancel'), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t('Delete'),
           style: 'destructive',
-          onPress: () => mutate((db) => (t.kind === 'daily' ? deleteDailyTask(db, t.id, today) : deleteOneTimeTask(db, t.id))),
+          onPress: () => mutate((db) => (task.kind === 'daily' ? deleteDailyTask(db, task.id, today) : deleteOneTimeTask(db, task.id))),
         },
       ],
     );
   };
 
   return (
-    <Screen title="Tasks" subtitle="Habits & to-dos">
+    <Screen title={t('Tasks')} subtitle={t('Habits & to-dos')}>
       <Segmented
         options={[
-          { value: 'list', label: 'To-do' },
-          { value: 'stats', label: 'Insights' },
+          { value: 'list', label: t('To-do') },
+          { value: 'stats', label: t('Insights') },
         ]}
         value={tab}
         onChange={setTab}
@@ -64,7 +67,7 @@ export default function TasksScreen() {
         <>
           <Card style={{ gap: spacing.md }}>
             <Row>
-              <IconButton icon="chevron-back" label="Previous day" onPress={() => setDate(addDays(date, -1))} filled />
+              <IconButton icon={rtl ? 'chevron-forward' : 'chevron-back'} label={t('Previous day')} onPress={() => setDate(addDays(date, -1))} filled />
               <Pressable
                 style={{ flex: 1, alignItems: 'center' }}
                 onPress={async () => {
@@ -76,15 +79,15 @@ export default function TasksScreen() {
               >
                 <Text style={[font.heading, { color: colors.text }]}>{relativeDayLabel(date, today)}</Text>
                 <Text style={[font.caption, { color: colors.textMuted }]}>
-                  {all.length ? `${done}/${all.length} done · ${formatPercent(done / all.length)}` : 'No tasks'}
+                  {all.length ? t('{done}/{total} done · {p}', { done, total: all.length, p: formatPercent(done / all.length) }) : t('No tasks')}
                 </Text>
               </Pressable>
-              <IconButton icon="chevron-forward" label="Next day" onPress={() => setDate(addDays(date, 1))} filled />
+              <IconButton icon={rtl ? 'chevron-back' : 'chevron-forward'} label={t('Next day')} onPress={() => setDate(addDays(date, 1))} filled />
             </Row>
             <ProgressBar progress={all.length ? done / all.length : 0} color={colors.tasks} />
             {date !== today && (
               <Pressable onPress={() => setDate(today)} style={{ alignSelf: 'center' }} accessibilityRole="button">
-                <Text style={[font.label, { color: colors.tasks }]}>Jump to today</Text>
+                <Text style={[font.label, { color: colors.tasks }]}>{t('Jump to today')}</Text>
               </Pressable>
             )}
           </Card>
@@ -92,20 +95,20 @@ export default function TasksScreen() {
           <FadeIn key={`d-${date}`}>
             <Card>
               <SectionTitle
-                title="Every day"
-                right={<IconButton icon="add" label="Add daily task" onPress={() => setAdding('daily')} color={colors.tasks} filled />}
+                title={t('Every day')}
+                right={<IconButton icon="add" label={t('Add daily task')} onPress={() => setAdding('daily')} color={colors.tasks} filled />}
               />
               {isFuture ? (
                 <Text style={[font.body, { color: colors.textMuted }]}>
-                  Your {data?.daily.length ?? 0} daily tasks will appear here on {relativeDayLabel(date, today)}.
+                  {t('Your {n} daily tasks will appear here on {day}.', { n: data?.daily.length ?? 0, day: relativeDayLabel(date, today) })}
                 </Text>
               ) : data?.daily.length ? (
                 data.daily.map((t) => <TaskRow key={t.id} task={t} date={date} onMore={() => setOptions(t)} />)
               ) : (
                 <EmptyState
                   icon="repeat"
-                  title="No daily tasks"
-                  message="Daily tasks repeat every day, e.g. Workout, Read 20 minutes, Drink water."
+                  title={t('No daily tasks')}
+                  message={t('Daily tasks repeat every day, e.g. Workout, Read 20 minutes, Drink water.')}
                 />
               )}
             </Card>
@@ -114,25 +117,25 @@ export default function TasksScreen() {
           <FadeIn key={`o-${date}`} delay={60}>
             <Card>
               <SectionTitle
-                title={`One-time · ${relativeDayLabel(date, today)}`}
-                right={<IconButton icon="add" label="Add one-time task" onPress={() => setAdding('once')} color={colors.tasks} filled />}
+                title={`${t('One-time')} · ${relativeDayLabel(date, today)}`}
+                right={<IconButton icon="add" label={t('Add one-time task')} onPress={() => setAdding('once')} color={colors.tasks} filled />}
               />
               {data?.once.length ? (
                 data.once.map((t) => <TaskRow key={t.id} task={t} date={date} onMore={() => setOptions(t)} />)
               ) : (
-                <EmptyState icon="calendar-outline" title="Nothing for this day" message="Add a task that only shows on this date." />
+                <EmptyState icon="calendar-outline" title={t('Nothing for this day')} message={t('Add a task that only shows on this date.')} />
               )}
             </Card>
           </FadeIn>
 
-          <Button label="Add task" icon="add" color={colors.tasks} onPress={() => setAdding('once')} />
+          <Button label={t('Add task')} icon="add" color={colors.tasks} onPress={() => setAdding('once')} />
         </>
       )}
 
-      <Sheet visible={adding !== null} onClose={() => setAdding(null)} title="New task">
+      <Sheet visible={adding !== null} onClose={() => setAdding(null)} title={t('New task')}>
         {adding && <TaskForm defaultKind={adding} defaultDate={date < today ? today : date} onDone={() => setAdding(null)} />}
       </Sheet>
-      <Sheet visible={editing !== null} onClose={() => setEditing(null)} title={editing?.kind === 'daily' ? 'Edit daily task' : 'Edit task'}>
+      <Sheet visible={editing !== null} onClose={() => setEditing(null)} title={editing?.kind === 'daily' ? t('Edit daily task') : t('Edit task')}>
         {editing && <TaskForm existing={editing} onDone={() => setEditing(null)} />}
       </Sheet>
       <Sheet visible={options !== null} onClose={() => setOptions(null)} title={options?.title ?? ''}>
@@ -141,11 +144,11 @@ export default function TasksScreen() {
             <Row gap={8}>
               <Ionicons name={options.kind === 'daily' ? 'repeat' : 'calendar-outline'} size={16} color={colors.textMuted} />
               <Text style={[font.body, { color: colors.textMuted }]}>
-                {options.kind === 'daily' ? 'Repeats every day' : `One-time task · ${relativeDayLabel(date, today)}`}
+                {options.kind === 'daily' ? t('Repeats every day') : `${t('One-time task')} · ${relativeDayLabel(date, today)}`}
               </Text>
             </Row>
             <Button
-              label="Edit"
+              label={t('Edit')}
               icon="create-outline"
               variant="secondary"
               onPress={() => {
@@ -153,7 +156,7 @@ export default function TasksScreen() {
                 setOptions(null);
               }}
             />
-            <Button label="Delete" icon="trash-outline" variant="danger" onPress={() => confirmDelete(options)} />
+            <Button label={t('Delete')} icon="trash-outline" variant="danger" onPress={() => confirmDelete(options)} />
           </View>
         )}
       </Sheet>

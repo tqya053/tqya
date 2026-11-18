@@ -82,8 +82,11 @@ export interface CalorieEntry {
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 
+export type LanguagePreference = 'system' | 'en' | 'ar';
+
 export interface Settings {
   calorieGoal: number;
   currency: string;
   theme: ThemePreference;
+  language: LanguagePreference;
 }

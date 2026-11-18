@@ -5,6 +5,7 @@ import { deleteCalorieEntry } from '../db/calories';
 import { deleteExpense } from '../db/expenses';
 import type { CalorieEntry, ExpenseWithCategory } from '../db/types';
 import { useAppData } from '../hooks/useAppData';
+import { categoryLabel, t } from '../i18n/translate';
 import { formatTime12, relativeDayLabel, type DateKey } from '../lib/dates';
 import { formatMoney, formatNumber } from '../lib/format';
 import { font, spacing, useTheme } from '../theme';
@@ -12,8 +13,8 @@ import { CalorieForm, ExpenseForm } from './forms';
 
 function confirm(title: string, message: string, onYes: () => void) {
   Alert.alert(title, message, [
-    { text: 'Cancel', style: 'cancel' },
-    { text: 'Delete', style: 'destructive', onPress: onYes },
+    { text: t('Cancel'), style: 'cancel' },
+    { text: t('Delete'), style: 'destructive', onPress: onYes },
   ]);
 }
 
@@ -25,17 +26,17 @@ export function ExpenseRow({ e, onPress }: { e: ExpenseWithCategory; onPress: ()
       onPress={onPress}
       style={({ pressed }) => [styles.row, { opacity: pressed ? 0.6 : 1 }]}
       accessibilityRole="button"
-      accessibilityLabel={`${e.category_name} ${formatMoney(e.amount_cents, settings.currency)}, edit`}
+      accessibilityLabel={`${categoryLabel(e.category_name)} ${formatMoney(e.amount_cents, settings.currency)}`}
     >
       <View style={[styles.icon, { backgroundColor: e.category_color + '22' }]}>
         <Ionicons name={e.category_icon as IconName} size={18} color={e.category_color} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={[font.body, { color: colors.text }]} numberOfLines={1}>
-          {e.description || e.category_name}
+          {e.description || categoryLabel(e.category_name)}
         </Text>
         <Text style={[font.caption, { color: colors.textMuted }]}>
-          {e.description ? `${e.category_name} · ` : ''}
+          {e.description ? `${categoryLabel(e.category_name)} · ` : ''}
           {formatTime12(e.time)}
         </Text>
       </View>
@@ -51,13 +52,13 @@ export function CalorieRow({ e, onPress }: { e: CalorieEntry; onPress: () => voi
       onPress={onPress}
       style={({ pressed }) => [styles.row, { opacity: pressed ? 0.6 : 1 }]}
       accessibilityRole="button"
-      accessibilityLabel={`${e.calories} calories at ${formatTime12(e.time)}, edit`}
+      accessibilityLabel={`${e.calories} ${t('kcal')} ${formatTime12(e.time)}`}
     >
       <View style={[styles.icon, { backgroundColor: colors.caloriesSoft }]}>
         <Ionicons name="flame" size={18} color={colors.calories} />
       </View>
       <Text style={[font.body, { color: colors.textMuted, flex: 1 }]}>{formatTime12(e.time)}</Text>
-      <Text style={[font.heading, { color: colors.text }]}>{formatNumber(e.calories)} kcal</Text>
+      <Text style={[font.heading, { color: colors.text }]}>{formatNumber(e.calories)} {t('kcal')}</Text>
     </Pressable>
   );
 }
@@ -103,16 +104,16 @@ export function DayGroups<T extends { id: number; date: DateKey }>({
 export function EditExpenseSheet({ expense, onClose }: { expense: ExpenseWithCategory | null; onClose: () => void }) {
   const { mutate } = useAppData();
   return (
-    <Sheet visible={!!expense} onClose={onClose} title="Edit expense">
+    <Sheet visible={!!expense} onClose={onClose} title={t('Edit expense')}>
       {expense && (
         <>
           <ExpenseForm key={expense.id} existing={expense} onDone={onClose} />
           <Button
-            label="Delete expense"
+            label={t('Delete expense')}
             icon="trash-outline"
             variant="danger"
             onPress={() =>
-              confirm('Delete expense?', 'This cannot be undone.', async () => {
+              confirm(t('Delete expense?'), t('This cannot be undone.'), async () => {
                 await mutate((db) => deleteExpense(db, expense.id));
                 onClose();
               })
@@ -127,16 +128,16 @@ export function EditExpenseSheet({ expense, onClose }: { expense: ExpenseWithCat
 export function EditCalorieSheet({ entry, onClose }: { entry: CalorieEntry | null; onClose: () => void }) {
   const { mutate } = useAppData();
   return (
-    <Sheet visible={!!entry} onClose={onClose} title="Edit calories">
+    <Sheet visible={!!entry} onClose={onClose} title={t('Edit calories')}>
       {entry && (
         <>
           <CalorieForm key={entry.id} existing={entry} onDone={onClose} />
           <Button
-            label="Delete entry"
+            label={t('Delete entry')}
             icon="trash-outline"
             variant="danger"
             onPress={() =>
-              confirm('Delete entry?', 'This cannot be undone.', async () => {
+              confirm(t('Delete entry?'), t('This cannot be undone.'), async () => {
                 await mutate((db) => deleteCalorieEntry(db, entry.id));
                 onClose();
               })

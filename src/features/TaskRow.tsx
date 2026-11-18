@@ -5,6 +5,7 @@ import { haptic, IconButton } from '../components/ui';
 import { setDailyTaskCompleted, setOneTimeTaskCompleted } from '../db/tasks';
 import type { DayTask } from '../db/types';
 import { useAppData } from '../hooks/useAppData';
+import { t } from '../i18n/translate';
 import type { DateKey } from '../lib/dates';
 import { font, radius, spacing, useTheme } from '../theme';
 
@@ -79,7 +80,7 @@ export function TaskRow({
         </Text>
         {task.kind === 'daily' ? <Ionicons name="repeat" size={14} color={colors.textFaint} /> : null}
       </Pressable>
-      {onMore ? <IconButton icon="ellipsis-horizontal" label={`Options for ${task.title}`} onPress={onMore} /> : null}
+      {onMore ? <IconButton icon="ellipsis-horizontal" label={t('Options for {name}', { name: task.title })} onPress={onMore} /> : null}
     </View>
   );
 }

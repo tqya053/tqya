@@ -219,11 +219,12 @@ describe('calories & settings', () => {
   });
 
   it('settings defaults and updates', async () => {
-    expect(await getSettings(db)).toEqual({ calorieGoal: 2000, currency: '$', theme: 'system' });
+    expect(await getSettings(db)).toEqual({ calorieGoal: 2000, currency: '$', theme: 'system', language: 'system' });
     await setSetting(db, 'calorieGoal', 1800);
     await setSetting(db, 'theme', 'dark');
     await setSetting(db, 'currency', '€');
-    expect(await getSettings(db)).toEqual({ calorieGoal: 1800, currency: '€', theme: 'dark' });
+    await setSetting(db, 'language', 'ar');
+    expect(await getSettings(db)).toEqual({ calorieGoal: 1800, currency: '€', theme: 'dark', language: 'ar' });
     await expect(setSetting(db, 'calorieGoal', 0)).rejects.toThrow();
   });
 });

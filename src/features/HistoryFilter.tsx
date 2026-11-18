@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { pickDate } from '../components/pickers';
 import { Chip } from '../components/ui';
 import { formatShortDate, startOfMonth, startOfWeek, type DateKey } from '../lib/dates';
+import { t } from '../i18n/translate';
 import { spacing } from '../theme';
 
 export type HistoryRange = { kind: 'all' | 'today' | 'week' | 'month' | 'day'; day?: DateKey };
@@ -38,10 +39,10 @@ export function HistoryFilter({
   today: DateKey;
 }) {
   const opts: { kind: HistoryRange['kind']; label: string }[] = [
-    { kind: 'all', label: 'All' },
-    { kind: 'today', label: 'Today' },
-    { kind: 'week', label: 'This week' },
-    { kind: 'month', label: 'This month' },
+    { kind: 'all', label: t('All') },
+    { kind: 'today', label: t('Today') },
+    { kind: 'week', label: t('This week') },
+    { kind: 'month', label: t('This month') },
   ];
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
@@ -49,7 +50,7 @@ export function HistoryFilter({
         <Chip key={o.kind} label={o.label} color={color} selected={value.kind === o.kind} onPress={() => onChange({ kind: o.kind })} />
       ))}
       <Chip
-        label={value.kind === 'day' && value.day ? formatShortDate(value.day) : 'Pick day'}
+        label={value.kind === 'day' && value.day ? formatShortDate(value.day) : t('Pick day')}
         icon="calendar-outline"
         color={color}
         selected={value.kind === 'day'}

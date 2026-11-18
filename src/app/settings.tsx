@@ -1,3 +1,5 @@
+import { useI18n } from '../i18n/I18nProvider';
+import { t, translateError, type LanguagePreference } from '../i18n/translate';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
@@ -13,12 +15,13 @@ import { font, spacing, useTheme } from '../theme';
 
 function LinkRow({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
   const { colors } = useTheme();
+  const { rtl } = useI18n();
   return (
     <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, paddingVertical: spacing.md })}>
       <Row>
         <Ionicons name={icon} size={20} color={colors.textMuted} />
         <Text style={[font.body, { color: colors.text, flex: 1 }]}>{label}</Text>
-        <Ionicons name="chevron-forward" size={18} color={colors.textFaint} />
+        <Ionicons name={rtl ? 'chevron-back' : 'chevron-forward'} size={18} color={colors.textFaint} />
       </Row>
     </Pressable>
   );
@@ -37,7 +40,7 @@ export default function SettingsScreen() {
     try {
       await shareBackup(db);
     } catch (e) {
-      Alert.alert('Backup failed', e instanceof Error ? e.message : String(e));
+      Alert.alert(t('Backup failed'), translateError(e instanceof Error ? e.message : String(e)));
     } finally {
       setBusy(null);
     }
@@ -51,45 +54,46 @@ export default function SettingsScreen() {
       const backup = validateBackup(json);
       const n = backup.data;
       Alert.alert(
-        'Restore this backup?',
-        `Backup from ${backup.exportedAt.slice(0, 10) || 'unknown date'}:\n` +
-          `• ${n.daily_tasks.length + n.one_time_tasks.length} tasks\n` +
-          `• ${n.expenses.length} expenses\n` +
-          `• ${n.calorie_entries.length} calorie entries\n\n` +
-          'All current data on this phone will be replaced.',
+        t('Restore this backup?'),
+        t('Backup from {date}:', { date: backup.exportedAt.slice(0, 10) || '—' }) +
+          '\n' +
+          `• ${t('{n} tasks', { n: n.daily_tasks.length + n.one_time_tasks.length })}\n` +
+          `• ${t('{n} expenses', { n: n.expenses.length })}\n` +
+          `• ${t('{n} calorie entries', { n: n.calorie_entries.length })}\n\n` +
+          t('All current data on this phone will be replaced.'),
         [
-          { text: 'Cancel', style: 'cancel' },
+          { text: t('Cancel'), style: 'cancel' },
           {
-            text: 'Restore',
+            text: t('Restore'),
             style: 'destructive',
             onPress: async () => {
               const ok = await mutate((d) => importData(d, json));
               if (ok) {
                 haptic('success');
-                Alert.alert('Restored', 'Your data has been restored from the backup.');
+                Alert.alert(t('Restored'), t('Your data has been restored from the backup.'));
               }
             },
           },
         ],
       );
     } catch (e) {
-      Alert.alert('Could not read backup', e instanceof Error ? e.message : String(e));
+      Alert.alert(t('Could not read backup'), translateError(e instanceof Error ? e.message : String(e)));
     } finally {
       setBusy(null);
     }
   };
 
   const doReset = () => {
-    Alert.alert('Reset all data?', 'This permanently deletes all tasks, expenses, calorie entries and settings on this phone.', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('Reset all data?'), t('This permanently deletes all tasks, expenses, calorie entries and settings on this phone.'), [
+      { text: t('Cancel'), style: 'cancel' },
       {
-        text: 'Continue',
+        text: t('Continue'),
         style: 'destructive',
         onPress: () =>
-          Alert.alert('Are you absolutely sure?', 'Consider exporting a backup first. This cannot be undone.', [
-            { text: 'Cancel', style: 'cancel' },
+          Alert.alert(t('Are you absolutely sure?'), t('Consider exporting a backup first. This cannot be undone.'), [
+            { text: t('Cancel'), style: 'cancel' },
             {
-              text: 'Delete everything',
+              text: t('Delete everything'),
               style: 'destructive',
               onPress: async () => {
                 await mutate((d) => resetAllData(d));
@@ -110,12 +114,25 @@ export default function SettingsScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <Card style={{ gap: spacing.md }}>
-        <Text style={[font.heading, { color: colors.text }]}>Appearance</Text>
+        <Text style={[font.heading, { color: colors.text }]}>{t('Language')} · Language</Text>
+        <Segmented<LanguagePreference>
+          options={[
+            { value: 'system', label: t('Phone language') },
+            { value: 'ar', label: 'العربية' },
+            { value: 'en', label: 'English' },
+          ]}
+          value={settings.language}
+          onChange={(v) => updateSetting('language', v)}
+        />
+      </Card>
+
+      <Card style={{ gap: spacing.md }}>
+        <Text style={[font.heading, { color: colors.text }]}>{t('Appearance')}</Text>
         <Segmented<ThemePreference>
           options={[
-            { value: 'system', label: 'System' },
-            { value: 'light', label: 'Light' },
-            { value: 'dark', label: 'Dark' },
+            { value: 'system', label: t('System') },
+            { value: 'light', label: t('Light') },
+            { value: 'dark', label: t('Dark') },
           ]}
           value={settings.theme}
           onChange={(v) => updateSetting('theme', v)}
@@ -123,39 +140,39 @@ export default function SettingsScreen() {
       </Card>
 
       <Card style={{ gap: spacing.md }}>
-        <Text style={[font.heading, { color: colors.text }]}>Preferences</Text>
+        <Text style={[font.heading, { color: colors.text }]}>{t('Preferences')}</Text>
         <Row style={{ alignItems: 'flex-end' }}>
           <View style={{ flex: 1 }}>
-            <Field label="Daily calorie goal (kcal)" value={goal} onChangeText={(t) => setGoal(t.replace(/\D/g, '').slice(0, 5))} keyboardType="number-pad" />
+            <Field label={t('Daily calorie goal (kcal)')} value={goal} onChangeText={(t) => setGoal(t.replace(/\D/g, '').slice(0, 5))} keyboardType="number-pad" />
           </View>
-          <Button label="Save" compact variant="secondary" disabled={Number(goal) === settings.calorieGoal || !Number(goal)} onPress={() => updateSetting('calorieGoal', Number(goal))} style={{ minHeight: 50 }} />
+          <Button label={t('Save')} compact variant="secondary" disabled={Number(goal) === settings.calorieGoal || !Number(goal)} onPress={() => updateSetting('calorieGoal', Number(goal))} style={{ minHeight: 50 }} />
         </Row>
         <Row style={{ alignItems: 'flex-end' }}>
           <View style={{ flex: 1 }}>
-            <Field label="Currency symbol" value={currency} onChangeText={setCurrency} maxLength={5} autoCapitalize="characters" placeholder="$" />
+            <Field label={t('Currency symbol')} value={currency} onChangeText={setCurrency} maxLength={5} autoCapitalize="characters" placeholder="$" />
           </View>
-          <Button label="Save" compact variant="secondary" disabled={currency.trim() === settings.currency || !currency.trim()} onPress={() => updateSetting('currency', currency.trim())} style={{ minHeight: 50 }} />
+          <Button label={t('Save')} compact variant="secondary" disabled={currency.trim() === settings.currency || !currency.trim()} onPress={() => updateSetting('currency', currency.trim())} style={{ minHeight: 50 }} />
         </Row>
         <Divider />
-        <LinkRow icon="pricetags-outline" label="Expense categories" onPress={() => router.push('/categories')} />
+        <LinkRow icon="pricetags-outline" label={t('Expense categories')} onPress={() => router.push('/categories')} />
       </Card>
 
       <Card style={{ gap: spacing.md }}>
-        <Text style={[font.heading, { color: colors.text }]}>Backup & restore</Text>
+        <Text style={[font.heading, { color: colors.text }]}>{t('Backup & restore')}</Text>
         <Text style={[font.body, { color: colors.textMuted }]}>
-          All data is stored only on this phone. Export a JSON backup to keep a copy or move to a new phone.
+          {t('All data is stored only on this phone. Export a JSON backup to keep a copy or move to a new phone.')}
         </Text>
-        <Button label="Export backup (JSON)" icon="share-outline" onPress={doExport} loading={busy === 'export'} />
-        <Button label="Restore from backup" icon="download-outline" variant="secondary" onPress={doImport} loading={busy === 'import'} />
+        <Button label={t('Export backup (JSON)')} icon="share-outline" onPress={doExport} loading={busy === 'export'} />
+        <Button label={t('Restore from backup')} icon="download-outline" variant="secondary" onPress={doImport} loading={busy === 'import'} />
       </Card>
 
       <Card style={{ gap: spacing.md }}>
-        <Text style={[font.heading, { color: colors.danger }]}>Danger zone</Text>
-        <Button label="Reset all data" icon="trash-outline" variant="danger" onPress={doReset} />
+        <Text style={[font.heading, { color: colors.danger }]}>{t('Danger zone')}</Text>
+        <Button label={t('Reset all data')} icon="trash-outline" variant="danger" onPress={doReset} />
       </Card>
 
       <Text style={[font.caption, { color: colors.textFaint, textAlign: 'center' }]}>
-        Daily Tracker v{Constants.expoConfig?.version ?? '1.0.0'} · Works offline · No account needed
+        {t('Daily Tracker')} v{Constants.expoConfig?.version ?? '1.0.0'} · {t('Works offline')} · {t('No account needed')}
       </Text>
     </ScrollView>
   );

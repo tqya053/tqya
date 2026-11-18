@@ -11,12 +11,13 @@ import {
   toTimeKey,
   type DateKey,
 } from '../lib/dates';
+import { t } from '../i18n/translate';
 import { font, radius, spacing, useTheme } from '../theme';
 
 /** Opens the native date picker. Resolves with the chosen date key or null if dismissed. */
 export function pickDate(current: DateKey, opts: { maxDate?: DateKey } = {}): Promise<DateKey | null> {
   if (Platform.OS === 'web') {
-    const v = globalThis.prompt?.('Date (YYYY-MM-DD)', current) ?? null;
+    const v = globalThis.prompt?.(t('Date (YYYY-MM-DD)'), current) ?? null;
     return Promise.resolve(v && isValidDateKey(v) && (!opts.maxDate || v <= opts.maxDate) ? v : null);
   }
   return new Promise((resolve) => {
@@ -31,7 +32,7 @@ export function pickDate(current: DateKey, opts: { maxDate?: DateKey } = {}): Pr
 
 export function pickTime(current: string): Promise<string | null> {
   if (Platform.OS === 'web') {
-    const v = globalThis.prompt?.('Time (HH:MM, 24h)', current) ?? null;
+    const v = globalThis.prompt?.(t('Time (HH:MM, 24h)'), current) ?? null;
     return Promise.resolve(v && isValidTimeKey(v) ? v : null);
   }
   const [h, m] = current.split(':').map(Number);
@@ -80,7 +81,7 @@ export function DateTimeFields({
       <View style={{ flex: 1 }}>
         <PickerButton
           icon="calendar-outline"
-          label="Date"
+          label={t('Date')}
           value={relativeDayLabel(date, today)}
           onPress={async () => {
             const d = await pickDate(date, { maxDate: time !== undefined ? today : undefined });
@@ -92,11 +93,11 @@ export function DateTimeFields({
         <View style={{ flex: 1 }}>
           <PickerButton
             icon="time-outline"
-            label="Time"
+            label={t('Time')}
             value={formatTime12(time)}
             onPress={async () => {
-              const t = await pickTime(time);
-              if (t) onChange({ date, time: t });
+              const picked = await pickTime(time);
+              if (picked) onChange({ date, time: picked });
             }}
           />
         </View>

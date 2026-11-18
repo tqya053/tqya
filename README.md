@@ -15,7 +15,8 @@ Built with **Expo SDK 58 · React Native 0.88 · TypeScript · expo-router · ex
 | **Expenses** | Three-step entry: amount → category → Confirm. 8 default categories plus your own (add / rename / delete). "Other" asks for a description. Every record stores amount, category, optional note, date and time. History with filters (all, today, this week, this month, any day) and per-day totals; tap any entry to edit or delete it. Insights: spending per day / week / month, category donut, period comparison, total and average daily spend. |
 | **Calories** | Type a number → Confirm (presets for one-tap entry). Today's total vs. an adjustable daily goal, history per day, edit / delete, charts with the goal line, and a 30-day goal check. |
 | **Statistics** | One page for every report: completion rate today / this week / this month, task trends, most consistent tasks (with streaks), spending trends, category breakdown, this-period vs. last-period comparison, and calorie trends against your goal. One switch sets daily / weekly / monthly for every chart. |
-| **Settings** | Light / dark / system theme, calorie goal, currency symbol, category manager, **JSON backup export / restore**, and **reset all data** (double confirmation). |
+| **Languages** | **Arabic (العربية)** and English, with a full right-to-left layout in Arabic. All screens, dates, times, chart labels, default category names and error messages are translated. Choose *Phone language*, *العربية* or *English* in Settings. |
+| **Settings** | Language, light / dark / system theme, calorie goal, currency symbol, category manager, **JSON backup export / restore**, and **reset all data** (double confirmation). |
 
 All charts are tappable. Tap a bar or point to show that day, week or month. They refresh automatically after any add, edit or delete.
 
@@ -43,10 +44,13 @@ src/
   components/             design system: ui.tsx, charts.tsx, pickers.tsx
   hooks/useAppData.tsx    db + settings context, `mutate()` and live `useQuery()`
   theme/                  light/dark tokens
+  i18n/                   translate.ts (t(), English source strings as keys), ar.ts (Arabic), I18nProvider (RTL)
 tests/                    Jest tests against a real SQLite engine (node:sqlite)
 ```
 
 **Data flow.** Screens read through `useQuery(fn, deps)`. Every write goes through `mutate(fn)`, which bumps a version counter, so every query on screen re-runs. That is how charts stay live. `useQuery` also re-runs when the calendar day changes: the app checks every 30 s and whenever it returns to the foreground. That means "today" rolls over even if the app stays open past midnight.
+
+**Translations.** UI strings are written in English and wrapped in `t('…')`. Arabic lives in `src/i18n/ar.ts`. The test suite fails if any `t()` string, tab name, period, default category or data-layer error is missing an Arabic translation. To add another language, add a dictionary next to `ar.ts` and extend `Lang`.
 
 **Extending.** To add a tracker, such as water or sleep:
 1. Append a migration in `db/schema.ts` (never edit shipped ones).
@@ -83,7 +87,7 @@ Design decisions:
 
 ```bash
 npm install
-npm test              # 33 tests: CRUD, daily reset, history, stats, backup/restore, persistence
+npm test              # 37 tests: CRUD, daily reset, history, stats, backup/restore, persistence, Arabic coverage
 npm run test:tz       # same tests under America/New_York and Asia/Tokyo
 npm run typecheck
 npx expo start        # then press "a" for Android (needs a development build; see below)

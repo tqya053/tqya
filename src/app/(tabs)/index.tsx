@@ -1,3 +1,4 @@
+import { t } from '../../i18n/translate';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -27,7 +28,7 @@ type QuickSheet = 'expense' | 'calories' | 'task' | null;
 
 function greeting() {
   const h = new Date().getHours();
-  return h < 5 ? 'Good night' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+  return t(h < 5 ? 'Good night' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening');
 }
 
 function QuickAction({ icon, label, color, soft, onPress }: { icon: IconName; label: string; color: string; soft: string; onPress: () => void }) {
@@ -60,13 +61,13 @@ export default function HomeScreen() {
   const summary = (() => {
     if (!data) return '';
     const parts: string[] = [];
-    if (data.total === 0) parts.push('No tasks planned yet');
-    else if (data.done === data.total) parts.push(`All ${data.total} tasks done — great work`);
-    else parts.push(`${data.done} of ${data.total} tasks done, ${data.total - data.done} to go`);
-    parts.push(data.expenseCents ? `${money(data.expenseCents)} spent` : 'nothing spent');
-    if (data.calories === 0) parts.push('no calories logged');
-    else if (data.calories <= goal) parts.push(`${formatNumber(goal - data.calories)} kcal left of your goal`);
-    else parts.push(`${formatNumber(data.calories - goal)} kcal over your goal`);
+    if (data.total === 0) parts.push(t('No tasks planned yet'));
+    else if (data.done === data.total) parts.push(t('All {n} tasks done — great work', { n: data.total }));
+    else parts.push(t('{done} of {total} tasks done, {left} to go', { done: data.done, total: data.total, left: data.total - data.done }));
+    parts.push(data.expenseCents ? t('{amount} spent', { amount: money(data.expenseCents) }) : t('nothing spent'));
+    if (data.calories === 0) parts.push(t('no calories logged'));
+    else if (data.calories <= goal) parts.push(t('{n} kcal left of your goal', { n: formatNumber(goal - data.calories) }));
+    else parts.push(t('{n} kcal over your goal', { n: formatNumber(data.calories - goal) }));
     return parts.join(' · ') + '.';
   })();
 
@@ -78,7 +79,7 @@ export default function HomeScreen() {
     <Screen
       title={greeting()}
       subtitle={formatLongDate(today)}
-      right={<IconButton icon="settings-outline" label="Settings" onPress={() => router.push('/settings')} filled />}
+      right={<IconButton icon="settings-outline" label={t('Settings')} onPress={() => router.push('/settings')} filled />}
     >
       {data && (
         <>
@@ -87,21 +88,21 @@ export default function HomeScreen() {
               <Row gap={spacing.xl}>
                 <ProgressRing progress={data.rate ?? 0} color={colors.tasks} size={116} stroke={12}>
                   <Text style={[font.title, { color: colors.text }]}>{formatPercent(data.rate)}</Text>
-                  <Text style={[font.caption, { color: colors.textMuted }]}>done</Text>
+                  <Text style={[font.caption, { color: colors.textMuted }]}>{t('done')}</Text>
                 </ProgressRing>
                 <View style={{ flex: 1, gap: spacing.md }}>
-                  <Text style={[font.heading, { color: colors.text }]}>Today’s tasks</Text>
+                  <Text style={[font.heading, { color: colors.text }]}>{t('Today’s tasks')}</Text>
                   <Row gap={spacing.lg}>
                     <View>
                       <Text style={[font.title, { color: colors.tasks }]}>{data.done}</Text>
-                      <Text style={[font.caption, { color: colors.textMuted }]}>completed</Text>
+                      <Text style={[font.caption, { color: colors.textMuted }]}>{t('completed')}</Text>
                     </View>
                     <View>
                       <Text style={[font.title, { color: colors.text }]}>{data.total - data.done}</Text>
-                      <Text style={[font.caption, { color: colors.textMuted }]}>remaining</Text>
+                      <Text style={[font.caption, { color: colors.textMuted }]}>{t('remaining')}</Text>
                     </View>
                   </Row>
-                  <Text style={[font.caption, { color: colors.textFaint }]}>This week: {formatPercent(data.weekRate)} completed</Text>
+                  <Text style={[font.caption, { color: colors.textFaint }]}>{t('This week: {p} completed', { p: formatPercent(data.weekRate) })}</Text>
                 </View>
               </Row>
             </Card>
@@ -109,27 +110,27 @@ export default function HomeScreen() {
 
           <FadeIn delay={60}>
             <Row gap={spacing.md} style={{ alignItems: 'stretch' }}>
-              <Pressable style={{ flex: 1 }} onPress={() => router.navigate('/expenses')} accessibilityRole="button" accessibilityLabel="Open expenses">
+              <Pressable style={{ flex: 1 }} onPress={() => router.navigate('/expenses')} accessibilityRole="button" accessibilityLabel={t('Open expenses')}>
                 <Card style={{ flex: 1, gap: spacing.sm }}>
                   <Row gap={8}>
                     <View style={[styles.dot, { backgroundColor: colors.expensesSoft }]}>
                       <Ionicons name="wallet" size={15} color={colors.expenses} />
                     </View>
-                    <Text style={[font.label, { color: colors.textMuted }]}>Spent today</Text>
+                    <Text style={[font.label, { color: colors.textMuted }]}>{t('Spent today')}</Text>
                   </Row>
                   <Text style={[font.title, { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>
                     {money(data.expenseCents)}
                   </Text>
-                  <Text style={[font.caption, { color: colors.textFaint }]}>Yesterday {money(data.expenseYesterdayCents)}</Text>
+                  <Text style={[font.caption, { color: colors.textFaint }]}>{t('Yesterday {amount}', { amount: money(data.expenseYesterdayCents) })}</Text>
                 </Card>
               </Pressable>
-              <Pressable style={{ flex: 1 }} onPress={() => router.navigate('/calories')} accessibilityRole="button" accessibilityLabel="Open calories">
+              <Pressable style={{ flex: 1 }} onPress={() => router.navigate('/calories')} accessibilityRole="button" accessibilityLabel={t('Open calories')}>
                 <Card style={{ flex: 1, gap: spacing.sm }}>
                   <Row gap={8}>
                     <View style={[styles.dot, { backgroundColor: colors.caloriesSoft }]}>
                       <Ionicons name="flame" size={15} color={colors.calories} />
                     </View>
-                    <Text style={[font.label, { color: colors.textMuted }]}>Calories</Text>
+                    <Text style={[font.label, { color: colors.textMuted }]}>{t('Calories')}</Text>
                   </Row>
                   <Text style={[font.title, { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>
                     {formatNumber(data.calories)}
@@ -143,9 +144,9 @@ export default function HomeScreen() {
 
           <FadeIn delay={120}>
             <Row gap={spacing.md}>
-              <QuickAction icon="add" label="Expense" color={colors.expenses} soft={colors.expensesSoft} onPress={() => setSheet('expense')} />
-              <QuickAction icon="flame-outline" label="Calories" color={colors.calories} soft={colors.caloriesSoft} onPress={() => setSheet('calories')} />
-              <QuickAction icon="checkbox-outline" label="Task" color={colors.tasks} soft={colors.tasksSoft} onPress={() => setSheet('task')} />
+              <QuickAction icon="add" label={t('Expense')} color={colors.expenses} soft={colors.expensesSoft} onPress={() => setSheet('expense')} />
+              <QuickAction icon="flame-outline" label={t('Calories')} color={colors.calories} soft={colors.caloriesSoft} onPress={() => setSheet('calories')} />
+              <QuickAction icon="checkbox-outline" label={t('Task')} color={colors.tasks} soft={colors.tasksSoft} onPress={() => setSheet('task')} />
             </Row>
           </FadeIn>
 
@@ -153,7 +154,7 @@ export default function HomeScreen() {
             <Card>
               <Row gap={8} style={{ marginBottom: spacing.sm }}>
                 <Ionicons name="sparkles-outline" size={16} color={colors.primary} />
-                <Text style={[font.heading, { color: colors.text }]}>Today’s summary</Text>
+                <Text style={[font.heading, { color: colors.text }]}>{t('Today’s summary')}</Text>
               </Row>
               <Text style={[font.body, { color: colors.textMuted, lineHeight: 22 }]}>{summary}</Text>
             </Card>
@@ -162,30 +163,30 @@ export default function HomeScreen() {
           <FadeIn delay={240}>
             <Card>
               <SectionTitle
-                title="Up next"
+                title={t('Up next')}
                 right={
                   <Pressable onPress={() => router.navigate('/tasks')} hitSlop={8} accessibilityRole="button">
-                    <Text style={[font.label, { color: colors.tasks }]}>All tasks</Text>
+                    <Text style={[font.label, { color: colors.tasks }]}>{t('All tasks')}</Text>
                   </Pressable>
                 }
               />
               {preview.length ? (
                 preview.map((t) => <TaskRow key={`${t.kind}-${t.id}`} task={t} date={today} />)
               ) : (
-                <EmptyState icon="checkbox-outline" title="Nothing planned" message="Add a daily habit or a one-time task." />
+                <EmptyState icon="checkbox-outline" title={t('Nothing planned')} message={t('Add a daily habit or a one-time task.')} />
               )}
             </Card>
           </FadeIn>
         </>
       )}
 
-      <Sheet visible={sheet === 'expense'} onClose={close} title="Add expense">
+      <Sheet visible={sheet === 'expense'} onClose={close} title={t('Add expense')}>
         <ExpenseForm autoFocus onDone={close} />
       </Sheet>
-      <Sheet visible={sheet === 'calories'} onClose={close} title="Add calories">
+      <Sheet visible={sheet === 'calories'} onClose={close} title={t('Add calories')}>
         <CalorieForm autoFocus onDone={close} />
       </Sheet>
-      <Sheet visible={sheet === 'task'} onClose={close} title="Add task">
+      <Sheet visible={sheet === 'task'} onClose={close} title={t('Add task')}>
         <TaskForm onDone={close} />
       </Sheet>
     </Screen>

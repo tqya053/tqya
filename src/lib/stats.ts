@@ -4,6 +4,7 @@
  * unit-tested.
  */
 import type { DailyTask, DailyTaskLog } from '../db/types';
+import { t } from '../i18n/translate';
 import {
   addDays,
   addMonths,
@@ -22,7 +23,7 @@ import {
 
 export type Period = 'daily' | 'weekly' | 'monthly';
 
-export const PERIOD_LABELS: Record<Period, string> = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
+export const PERIOD_LABELS: Record<Period, string> = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' }; // translate with t()
 
 /** How many buckets each period shows in charts. */
 export const PERIOD_BUCKETS: Record<Period, number> = { daily: 14, weekly: 8, monthly: 6 };
@@ -48,12 +49,12 @@ export function getBuckets(period: Period, today: DateKey, count = PERIOD_BUCKET
       start = addDays(today, -i);
       fullEnd = start;
       label = String(parseDateKey(start).getDate());
-      title = `${weekdayShort(start)}, ${formatShortDate(start)}`;
+      title = `${weekdayShort(start)}${t(', ')}${formatShortDate(start)}`;
     } else if (period === 'weekly') {
       start = addDays(startOfWeek(today), -7 * i);
       fullEnd = addDays(start, 6);
       label = formatShortDate(start);
-      title = `Week of ${formatShortDate(start)}`;
+      title = t('Week of {date}', { date: formatShortDate(start) });
     } else {
       start = addMonths(startOfMonth(today), -i);
       fullEnd = addDays(addMonths(start, 1), -1);

@@ -10,6 +10,8 @@ import { addExpense, listCategories, updateExpense } from '../db/expenses';
 import { addDailyTask, addOneTimeTask, renameDailyTask, updateOneTimeTask } from '../db/tasks';
 import type { CalorieEntry, ExpenseWithCategory } from '../db/types';
 import { useAppData, useQuery } from '../hooks/useAppData';
+import { useI18n } from '../i18n/I18nProvider';
+import { categoryLabel, t } from '../i18n/translate';
 import { toTimeKey, type DateKey } from '../lib/dates';
 import { centsToInput, formatMoney, parseAmountToCents, parseCalories, sanitizeAmountInput } from '../lib/format';
 import { font, radius, spacing, useTheme } from '../theme';
@@ -37,6 +39,7 @@ function BigNumberInput({
   inputRef?: React.RefObject<React.ComponentRef<typeof TextInput> | null>;
 }) {
   const { colors } = useTheme();
+  const { rtl } = useI18n();
   return (
     <Pressable
       onPress={() => inputRef?.current?.focus()}
@@ -53,8 +56,8 @@ function BigNumberInput({
         autoFocus={autoFocus}
         returnKeyType="done"
         onSubmitEditing={onSubmit}
-        style={[styles.bigText, { color }]}
-        accessibilityLabel={decimal ? 'Amount' : 'Calories'}
+        style={[styles.bigText, { color, letterSpacing: rtl ? 0 : -1, direction: 'ltr' }]}
+        accessibilityLabel={decimal ? t('Amount') : t('Calories')}
         maxLength={12}
       />
       {suffix ? <Text style={[styles.bigAffix, { color: colors.textMuted }]}>{suffix}</Text> : null}
@@ -140,16 +143,16 @@ export function ExpenseForm({
       />
       <View style={{ gap: spacing.sm }}>
         <Row>
-          <Text style={[font.label, { color: colors.textMuted, flex: 1 }]}>Category</Text>
+          <Text style={[font.label, { color: colors.textMuted, flex: 1 }]}>{t('Category')}</Text>
           <Pressable onPress={() => router.push('/categories')} hitSlop={8} accessibilityRole="button">
-            <Text style={[font.label, { color: colors.expenses }]}>Manage</Text>
+            <Text style={[font.label, { color: colors.expenses }]}>{t('Manage')}</Text>
           </Pressable>
         </Row>
         <View style={styles.chips}>
           {categories.map((c) => (
             <Chip
               key={c.id}
-              label={c.name}
+              label={categoryLabel(c.name)}
               icon={c.icon as IconName}
               color={c.color}
               selected={c.id === categoryId}
@@ -160,8 +163,8 @@ export function ExpenseForm({
       </View>
       {needsDescription ? (
         <Field
-          label="What was it for?"
-          placeholder="e.g. Birthday gift"
+          label={t('What was it for?')}
+          placeholder={t('e.g. Birthday gift')}
           value={description}
           onChangeText={setDescription}
           maxLength={120}
@@ -169,18 +172,18 @@ export function ExpenseForm({
           onSubmitEditing={save}
         />
       ) : showNote ? (
-        <Field label="Note (optional)" placeholder="Add a note" value={description} onChangeText={setDescription} maxLength={120} />
+        <Field label={t('Note (optional)')} placeholder={t('Add a note')} value={description} onChangeText={setDescription} maxLength={120} />
       ) : (
         <Pressable onPress={() => setShowNote(true)} hitSlop={6} accessibilityRole="button">
           <Row gap={6}>
             <Ionicons name="add-circle-outline" size={18} color={colors.textMuted} />
-            <Text style={[font.label, { color: colors.textMuted }]}>Add note (optional)</Text>
+            <Text style={[font.label, { color: colors.textMuted }]}>{t('Add note (optional)')}</Text>
           </Row>
         </Pressable>
       )}
       {existing ? <DateTimeFields date={when.date} time={when.time} today={today} onChange={setWhen} /> : null}
       <Button
-        label={cents ? `Confirm ${formatMoney(cents, settings.currency)}` : 'Confirm'}
+        label={cents ? t('Confirm {value}', { value: formatMoney(cents, settings.currency) }) : t('Confirm')}
         icon="checkmark"
         color={colors.expenses}
         disabled={!canSave}
@@ -241,7 +244,7 @@ export function CalorieForm({
       <BigNumberInput
         value={value}
         onChangeText={(t) => setValue(t.replace(/\D/g, '').replace(/^0+/, '').slice(0, 5))}
-        suffix="kcal"
+        suffix={t('kcal')}
         color={colors.calories}
         autoFocus={autoFocus}
         onSubmit={save}
@@ -256,7 +259,7 @@ export function CalorieForm({
       )}
       {existing ? <DateTimeFields date={when.date} time={when.time} today={today} onChange={setWhen} /> : null}
       <Button
-        label={calories ? `Confirm ${calories} kcal` : 'Confirm'}
+        label={calories ? t('Confirm {value}', { value: `${calories} ${t('kcal')}` }) : t('Confirm')}
         icon="checkmark"
         color={colors.calories}
         disabled={!calories}
@@ -311,8 +314,8 @@ export function TaskForm({
   const hint = useMemo(
     () =>
       kind === 'daily'
-        ? 'Repeats every day. Completion resets automatically each morning.'
-        : 'Shows only on the selected day.',
+        ? t('Repeats every day. Completion resets automatically each morning.')
+        : t('Shows only on the selected day.'),
     [kind],
   );
 
@@ -321,8 +324,8 @@ export function TaskForm({
       {!existing && (
         <Segmented
           options={[
-            { value: 'once', label: 'One-time' },
-            { value: 'daily', label: 'Every day' },
+            { value: 'once', label: t('One-time') },
+            { value: 'daily', label: t('Every day') },
           ]}
           value={kind}
           onChange={setKind}
@@ -330,8 +333,8 @@ export function TaskForm({
         />
       )}
       <Field
-        label={kind === 'daily' ? 'Daily task' : 'Task'}
-        placeholder={kind === 'daily' ? 'e.g. Read 20 minutes' : 'e.g. Call the dentist'}
+        label={kind === 'daily' ? t('Daily task') : t('Task')}
+        placeholder={kind === 'daily' ? t('e.g. Read 20 minutes') : t('e.g. Call the dentist')}
         value={title}
         onChangeText={setTitle}
         autoFocus={!existing}
@@ -342,7 +345,7 @@ export function TaskForm({
       {kind === 'once' && <DateTimeFields date={date} today={today} onChange={(v) => setDate(v.date)} />}
       <Text style={[font.caption, { color: colors.textMuted, marginTop: -spacing.sm }]}>{hint}</Text>
       <Button
-        label={existing ? 'Save changes' : 'Add task'}
+        label={existing ? t('Save changes') : t('Add task')}
         icon="checkmark"
         color={colors.tasks}
         disabled={!canSave}
@@ -364,7 +367,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     gap: spacing.sm,
   },
-  bigText: { fontSize: 44, fontWeight: '800', letterSpacing: -1, minWidth: 80, textAlign: 'center', paddingVertical: 4 },
+  bigText: { fontSize: 44, fontWeight: '800', minWidth: 80, textAlign: 'center', paddingVertical: 4 },
   bigAffix: { fontSize: 24, fontWeight: '700' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
 });

@@ -1,3 +1,4 @@
+import { t } from '../../i18n/translate';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
@@ -33,16 +34,16 @@ export default function StatsScreen() {
 
   return (
     <Screen
-      title="Statistics"
-      subtitle="Reports & analytics"
-      right={<IconButton icon="cloud-download-outline" label="Backup and settings" onPress={() => router.push('/settings')} filled />}
+      title={t('Statistics')}
+      subtitle={t('Reports & analytics')}
+      right={<IconButton icon="cloud-download-outline" label={t('Backup and settings')} onPress={() => router.push('/settings')} filled />}
     >
       <Segmented
         options={[
-          { value: 'all', label: 'All' },
-          { value: 'tasks', label: 'Tasks' },
-          { value: 'expenses', label: 'Money' },
-          { value: 'calories', label: 'Calories' },
+          { value: 'all', label: t('All') },
+          { value: 'tasks', label: t('Tasks') },
+          { value: 'expenses', label: t('Money') },
+          { value: 'calories', label: t('Calories') },
         ]}
         value={section}
         onChange={setSection}
@@ -52,11 +53,11 @@ export default function StatsScreen() {
       {show('tasks') && (
         <>
           <Card>
-            <Text style={[font.heading, { color: colors.text, marginBottom: spacing.lg }]}>Completion rate</Text>
+            <Text style={[font.heading, { color: colors.text, marginBottom: spacing.lg }]}>{t('Completion rate')}</Text>
             <Row>
-              <RateRing label="Today" rate={rates?.daily ?? null} />
-              <RateRing label="This week" rate={rates?.weekly ?? null} />
-              <RateRing label="This month" rate={rates?.monthly ?? null} />
+              <RateRing label={t('Today')} rate={rates?.daily ?? null} />
+              <RateRing label={t('This week')} rate={rates?.weekly ?? null} />
+              <RateRing label={t('This month')} rate={rates?.monthly ?? null} />
             </Row>
           </Card>
           <TaskStatsSection period={period} />

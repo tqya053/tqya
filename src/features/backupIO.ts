@@ -4,6 +4,7 @@ import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 import { exportData } from '../db/backup';
 import type { DB } from '../db/types';
+import { t } from '../i18n/translate';
 import { todayKey } from '../lib/dates';
 
 /** Writes a JSON backup and opens the share sheet (save to Files/Drive, send, etc.). */
@@ -26,8 +27,8 @@ export async function shareBackup(db: DB): Promise<string> {
   if (file.exists) file.delete();
   file.create();
   await file.write(json);
-  if (!(await Sharing.isAvailableAsync())) throw new Error('Sharing is not available on this device');
-  await Sharing.shareAsync(file.uri, { mimeType: 'application/json', dialogTitle: 'Save your Daily Tracker backup', UTI: 'public.json' });
+  if (!(await Sharing.isAvailableAsync())) throw new Error(t('Sharing is not available on this device'));
+  await Sharing.shareAsync(file.uri, { mimeType: 'application/json', dialogTitle: t('Save your Daily Tracker backup'), UTI: 'public.json' });
   return name;
 }
 
@@ -44,6 +45,6 @@ export async function pickBackupFile(): Promise<unknown | null> {
   try {
     return JSON.parse(text);
   } catch {
-    throw new Error('The selected file is not valid JSON');
+    throw new Error(t('The selected file is not valid JSON'));
   }
 }

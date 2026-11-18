@@ -20,6 +20,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
+import { useI18n } from '../i18n/I18nProvider';
 import { font, radius, spacing, useTheme } from '../theme';
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
@@ -223,8 +224,11 @@ export function Segmented<T extends string>({
   accent?: string;
 }) {
   const { colors } = useTheme();
+  const { rtl } = useI18n();
   const [width, setWidth] = useState(0);
-  const index = Math.max(0, options.findIndex((o) => o.value === value));
+  const selectedIndex = Math.max(0, options.findIndex((o) => o.value === value));
+  // Items are laid out right-to-left in Arabic; the thumb is positioned physically from the left.
+  const index = rtl ? options.length - 1 - selectedIndex : selectedIndex;
   const pos = useRef(new Animated.Value(index)).current;
   useEffect(() => {
     Animated.spring(pos, { toValue: index, useNativeDriver: true, speed: 20, bounciness: 4 }).start();
@@ -320,6 +324,7 @@ export function ProgressBar({ progress, color, height = 8 }: { progress: number;
 
 export function Field({ label, style, ...props }: TextInputProps & { label?: string }) {
   const { colors } = useTheme();
+  const { rtl } = useI18n();
   return (
     <View style={{ gap: 6 }}>
       {label ? <Text style={[font.label, { color: colors.textMuted }]}>{label}</Text> : null}
@@ -328,7 +333,7 @@ export function Field({ label, style, ...props }: TextInputProps & { label?: str
         {...props}
         style={[
           styles.field,
-          { backgroundColor: colors.cardAlt, color: colors.text, borderColor: colors.border },
+          { backgroundColor: colors.cardAlt, color: colors.text, borderColor: colors.border, textAlign: rtl ? 'right' : 'left' },
           style,
         ]}
       />
@@ -348,11 +353,12 @@ export function Sheet({
   children: ReactNode;
 }) {
   const { colors } = useTheme();
+  const { t, rtl } = useI18n();
   const insets = useSafeAreaInsets();
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: colors.overlay }]} onPress={onClose} accessibilityLabel="Close" />
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, direction: rtl ? 'rtl' : 'ltr' }}>
+        <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: colors.overlay }]} onPress={onClose} accessibilityLabel={t('Close')} />
         <View style={{ flex: 1 }} pointerEvents="box-none" />
         <View
           style={[
@@ -363,7 +369,7 @@ export function Sheet({
           <View style={[styles.grabber, { backgroundColor: colors.border }]} />
           <View style={styles.sheetHeader}>
             <Text style={[font.heading, { color: colors.text, flex: 1 }]}>{title}</Text>
-            <IconButton icon="close" label="Close" onPress={onClose} filled />
+            <IconButton icon="close" label={t('Close')} onPress={onClose} filled />
           </View>
           <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: spacing.lg }} bounces={false}>
             {children}

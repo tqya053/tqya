@@ -13,6 +13,7 @@ import {
 import { Alert, AppState } from 'react-native';
 import { DEFAULT_SETTINGS, getSettings, setSetting } from '../db/settings';
 import type { DB, Settings } from '../db/types';
+import { t, translateError } from '../i18n/translate';
 import { todayKey, type DateKey } from '../lib/dates';
 
 interface AppData {
@@ -63,7 +64,7 @@ export function AppDataProvider({ children }: { children: (settings: Settings) =
         const result = await fn(db);
         return result;
       } catch (e) {
-        Alert.alert('Could not save', e instanceof Error ? e.message : String(e));
+        Alert.alert(t('Could not save'), translateError(e instanceof Error ? e.message : String(e)));
         return undefined;
       } finally {
         setVersion((v) => v + 1);
@@ -80,7 +81,7 @@ export function AppDataProvider({ children }: { children: (settings: Settings) =
         setVersion((v) => v + 1);
         return true;
       } catch (e) {
-        Alert.alert('Invalid value', e instanceof Error ? e.message : String(e));
+        Alert.alert(t('Invalid value'), translateError(e instanceof Error ? e.message : String(e)));
         return false;
       }
     },

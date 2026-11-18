@@ -96,7 +96,7 @@ export function TrendBars({
   };
 
   return (
-    <View onLayout={(e) => setWidth(e.nativeEvent.layout.width)} style={{ minHeight: height + 40, marginLeft: -spacing.sm }}>
+    <View onLayout={(e) => setWidth(e.nativeEvent.layout.width)} style={{ minHeight: height + 40, marginLeft: -spacing.sm, direction: 'ltr' }}>
       {width > 0 &&
         (restColor ? (
           <BarChart
@@ -149,7 +149,7 @@ export function TrendLine({
   const step = data.length > 1 ? chartWidth / (data.length - 1) : chartWidth;
   const labelStyle = { color: colors.textMuted, fontSize: 10, fontWeight: '600' as const };
   return (
-    <View onLayout={(e) => setWidth(e.nativeEvent.layout.width)} style={{ minHeight: height + 40, marginLeft: -spacing.sm }}>
+    <View onLayout={(e) => setWidth(e.nativeEvent.layout.width)} style={{ minHeight: height + 40, marginLeft: -spacing.sm, direction: 'ltr' }}>
       {width > 0 && (
         <LineChart
           data={data.map((d, i) => ({

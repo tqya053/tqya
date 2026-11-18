@@ -64,6 +64,15 @@ export const font = {
   caption: { fontSize: 12, fontWeight: '500' as const },
 };
 
+const LATIN_SPACING = Object.fromEntries(Object.entries(font).map(([k, v]) => [k, 'letterSpacing' in v ? v.letterSpacing : 0]));
+
+/** Arabic letters must connect, so negative letter-spacing is removed for Arabic. */
+export function applyFontLocale(lang: 'en' | 'ar') {
+  for (const [k, v] of Object.entries(font)) {
+    if ('letterSpacing' in v) (v as { letterSpacing: number }).letterSpacing = lang === 'ar' ? 0 : LATIN_SPACING[k];
+  }
+}
+
 export interface Theme {
   dark: boolean;
   colors: Colors;

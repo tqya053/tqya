@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router/js-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { IconName } from '../../components/ui';
+import { useI18n } from '../../i18n/I18nProvider';
 import { useTheme } from '../../theme';
 
 const TABS: { name: string; title: string; icon: IconName; iconActive: IconName }[] = [
@@ -15,6 +16,7 @@ const TABS: { name: string; title: string; icon: IconName; iconActive: IconName 
 export default function TabLayout() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const { t } = useI18n();
   return (
     <Tabs
       screenOptions={{
@@ -33,13 +35,13 @@ export default function TabLayout() {
         sceneStyle: { backgroundColor: colors.bg },
       }}
     >
-      {TABS.map((t) => (
+      {TABS.map((tab) => (
         <Tabs.Screen
-          key={t.name}
-          name={t.name}
+          key={tab.name}
+          name={tab.name}
           options={{
-            title: t.title,
-            tabBarIcon: ({ color, focused, size }) => <Ionicons name={focused ? t.iconActive : t.icon} size={size - 2} color={color as string} />,
+            title: t(tab.title),
+            tabBarIcon: ({ color, focused, size }) => <Ionicons name={focused ? tab.iconActive : tab.icon} size={size - 2} color={color as string} />,
           }}
         />
       ))}

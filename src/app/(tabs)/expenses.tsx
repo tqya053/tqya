@@ -1,3 +1,4 @@
+import { t } from '../../i18n/translate';
 import { useState } from 'react';
 import { Text } from 'react-native';
 import { Button, Card, EmptyState, FadeIn, Row, Screen, SectionTitle, Segmented, Stat } from '../../components/ui';
@@ -33,12 +34,12 @@ export default function ExpensesScreen() {
   const historyDays = new Set(history.map((e) => e.date)).size;
 
   return (
-    <Screen title="Expenses" subtitle={`Today ${money(todayTotal)}`}>
+    <Screen title={t('Expenses')} subtitle={t('Today {value}', { value: money(todayTotal) })}>
       <Segmented
         options={[
-          { value: 'add', label: 'Add' },
-          { value: 'history', label: 'History' },
-          { value: 'stats', label: 'Insights' },
+          { value: 'add', label: t('Add') },
+          { value: 'history', label: t('History') },
+          { value: 'stats', label: t('Insights') },
         ]}
         value={tab}
         onChange={setTab}
@@ -53,11 +54,11 @@ export default function ExpensesScreen() {
             </Card>
           </FadeIn>
           <Card>
-            <SectionTitle title="Today" right={<Text style={[font.heading, { color: colors.expenses }]}>{money(todayTotal)}</Text>} />
+            <SectionTitle title={t('Today')} right={<Text style={[font.heading, { color: colors.expenses }]}>{money(todayTotal)}</Text>} />
             {todays.length ? (
               todays.map((e) => <ExpenseRow key={e.id} e={e} onPress={() => setEditing(e)} />)
             ) : (
-              <EmptyState icon="wallet-outline" title="No expenses today" message="Enter an amount, pick a category, confirm." />
+              <EmptyState icon="wallet-outline" title={t('No expenses today')} message={t('Enter an amount, pick a category, confirm.')} />
             )}
           </Card>
         </>
@@ -76,9 +77,9 @@ export default function ExpensesScreen() {
           />
           <Card>
             <Row>
-              <Stat label="Total" value={money(historyTotal)} color={colors.expenses} />
-              <Stat label="Entries" value={String(history.length)} />
-              <Stat label="Avg / day" value={historyDays ? money(Math.round(historyTotal / historyDays)) : '—'} hint="days with spending" />
+              <Stat label={t('Total')} value={money(historyTotal)} color={colors.expenses} />
+              <Stat label={t('Entries')} value={String(history.length)} />
+              <Stat label={t('Avg / day')} value={historyDays ? money(Math.round(historyTotal / historyDays)) : '—'} hint={t('days with spending')} />
             </Row>
           </Card>
           <Card>
@@ -90,11 +91,11 @@ export default function ExpensesScreen() {
                 renderItem={(e) => <ExpenseRow e={e} onPress={() => setEditing(e)} />}
               />
             ) : (
-              <EmptyState icon="receipt-outline" title="No expenses" message="Nothing recorded for this filter." />
+              <EmptyState icon="receipt-outline" title={t('No expenses')} message={t('Nothing recorded for this filter.')} />
             )}
             {history.length > limit && (
               <Button
-                label={`Show more (${history.length - limit})`}
+                label={t('Show more ({n})', { n: history.length - limit })}
                 variant="secondary"
                 onPress={() => setLimit(limit + PAGE)}
                 style={{ marginTop: spacing.lg }}

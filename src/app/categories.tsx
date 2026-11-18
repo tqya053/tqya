@@ -1,3 +1,4 @@
+import { categoryLabel, t } from '../i18n/translate';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
@@ -26,9 +27,9 @@ export default function CategoriesScreen() {
   };
 
   const remove = (c: Category) =>
-    Alert.alert('Delete category?', `"${c.name}" will no longer be offered. Past expenses keep this category in history.`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => mutate((db) => deleteCategory(db, c.id)) },
+    Alert.alert(t('Delete category?'), t('"{name}" will no longer be offered. Past expenses keep this category in history.', { name: categoryLabel(c.name) }), [
+      { text: t('Cancel'), style: 'cancel' },
+      { text: t('Delete'), style: 'destructive', onPress: () => mutate((db) => deleteCategory(db, c.id)) },
     ]);
 
   return (
@@ -38,12 +39,12 @@ export default function CategoriesScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <Card style={{ gap: spacing.md }}>
-        <Text style={[font.heading, { color: colors.text }]}>Add a category</Text>
+        <Text style={[font.heading, { color: colors.text }]}>{t('Add a category')}</Text>
         <Row style={{ alignItems: 'flex-end' }}>
           <View style={{ flex: 1 }}>
-            <Field placeholder="e.g. Pets, Books, Rent" value={newName} onChangeText={setNewName} maxLength={40} returnKeyType="done" onSubmitEditing={add} />
+            <Field placeholder={t('e.g. Pets, Books, Rent')} value={newName} onChangeText={setNewName} maxLength={40} returnKeyType="done" onSubmitEditing={add} />
           </View>
-          <Button label="Add" icon="add" compact onPress={add} disabled={!newName.trim()} color={colors.expenses} style={{ minHeight: 50 }} />
+          <Button label={t('Add')} icon="add" compact onPress={add} disabled={!newName.trim()} color={colors.expenses} style={{ minHeight: 50 }} />
         </Row>
       </Card>
 
@@ -56,27 +57,27 @@ export default function CategoriesScreen() {
                 <Ionicons name={c.icon as IconName} size={18} color={c.color} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[font.body, { color: colors.text }]}>{c.name}</Text>
-                {c.is_other ? <Text style={[font.caption, { color: colors.textMuted }]}>Asks for a description · required</Text> : null}
+                <Text style={[font.body, { color: colors.text }]}>{categoryLabel(c.name)}</Text>
+                {c.is_other ? <Text style={[font.caption, { color: colors.textMuted }]}>{t('Asks for a description · required')}</Text> : null}
               </View>
               <IconButton
                 icon="create-outline"
-                label={`Rename ${c.name}`}
+                label={t('Rename {name}', { name: categoryLabel(c.name) })}
                 onPress={() => {
                   setEditing(c);
                   setRename(c.name);
                 }}
               />
-              {!c.is_other && <IconButton icon="trash-outline" label={`Delete ${c.name}`} color={colors.danger} onPress={() => remove(c)} />}
+              {!c.is_other && <IconButton icon="trash-outline" label={t('Delete {name}', { name: categoryLabel(c.name) })} color={colors.danger} onPress={() => remove(c)} />}
             </Row>
           </View>
         ))}
       </Card>
 
-      <Sheet visible={!!editing} onClose={() => setEditing(null)} title="Rename category">
+      <Sheet visible={!!editing} onClose={() => setEditing(null)} title={t('Rename category')}>
         <Field value={rename} onChangeText={setRename} autoFocus maxLength={40} />
         <Button
-          label="Save"
+          label={t('Save')}
           icon="checkmark"
           color={colors.expenses}
           disabled={!rename.trim()}

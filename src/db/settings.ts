@@ -1,9 +1,10 @@
-import type { DB, Settings, ThemePreference } from './types';
+import type { DB, LanguagePreference, Settings, ThemePreference } from './types';
 
 export const DEFAULT_SETTINGS: Settings = {
   calorieGoal: 2000,
   currency: '$',
   theme: 'system',
+  language: 'system',
 };
 
 export async function getSettings(db: DB): Promise<Settings> {
@@ -11,10 +12,12 @@ export async function getSettings(db: DB): Promise<Settings> {
   const map = new Map(rows.map((r) => [r.key, r.value]));
   const goal = Number(map.get('calorieGoal'));
   const theme = map.get('theme') as ThemePreference | undefined;
+  const language = map.get('language') as LanguagePreference | undefined;
   return {
     calorieGoal: Number.isFinite(goal) && goal > 0 ? Math.round(goal) : DEFAULT_SETTINGS.calorieGoal,
     currency: map.get('currency') ?? DEFAULT_SETTINGS.currency,
     theme: theme === 'light' || theme === 'dark' || theme === 'system' ? theme : DEFAULT_SETTINGS.theme,
+    language: language === 'en' || language === 'ar' || language === 'system' ? language : DEFAULT_SETTINGS.language,
   };
 }
 

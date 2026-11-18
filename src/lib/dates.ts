@@ -5,6 +5,8 @@
  * late-evening entries into the next/previous day.
  */
 
+import { getLang } from '../i18n/translate';
+
 export type DateKey = string; // YYYY-MM-DD
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -84,46 +86,73 @@ export function rangeKeys(start: DateKey, end: DateKey): DateKey[] {
   return out;
 }
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const WEEKDAYS_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const MONTHS_LONG = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
+const NAMES = {
+  en: {
+    months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    monthsLong: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+    weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    weekdaysLong: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+    today: 'Today',
+    yesterday: 'Yesterday',
+    tomorrow: 'Tomorrow',
+    am: 'AM',
+    pm: 'PM',
+  },
+  ar: {
+    months: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'],
+    monthsLong: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'],
+    weekdays: ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'],
+    weekdaysLong: ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'],
+    today: 'اليوم',
+    yesterday: 'أمس',
+    tomorrow: 'غداً',
+    am: 'ص',
+    pm: 'م',
+  },
+};
+
+const names = () => NAMES[getLang()];
 
 export function formatLongDate(key: DateKey): string {
   const d = parseDateKey(key);
-  return `${WEEKDAYS_LONG[d.getDay()]}, ${MONTHS_LONG[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+  const n = names();
+  if (getLang() === 'ar') return `${n.weekdaysLong[d.getDay()]}، ${d.getDate()} ${n.monthsLong[d.getMonth()]} ${d.getFullYear()}`;
+  return `${n.weekdaysLong[d.getDay()]}, ${n.monthsLong[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
 }
 
 export function formatShortDate(key: DateKey): string {
   const d = parseDateKey(key);
-  return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
+  const n = names();
+  return getLang() === 'ar' ? `${d.getDate()} ${n.months[d.getMonth()]}` : `${n.months[d.getMonth()]} ${d.getDate()}`;
 }
 
 export function formatMonth(key: DateKey, withYear = false): string {
   const d = parseDateKey(key);
-  return withYear ? `${MONTHS[d.getMonth()]} ${d.getFullYear()}` : MONTHS[d.getMonth()];
+  const m = names().months[d.getMonth()];
+  return withYear ? `${m} ${d.getFullYear()}` : m;
 }
 
 export function weekdayShort(key: DateKey): string {
-  return WEEKDAYS[parseDateKey(key).getDay()];
+  return names().weekdays[parseDateKey(key).getDay()];
 }
 
 /** "Today", "Yesterday", "Tomorrow" or "Mon, Mar 4". */
 export function relativeDayLabel(key: DateKey, today: DateKey): string {
-  if (key === today) return 'Today';
-  if (key === addDays(today, -1)) return 'Yesterday';
-  if (key === addDays(today, 1)) return 'Tomorrow';
+  const n = names();
+  if (key === today) return n.today;
+  if (key === addDays(today, -1)) return n.yesterday;
+  if (key === addDays(today, 1)) return n.tomorrow;
   const d = parseDateKey(key);
   const sameYear = key.slice(0, 4) === today.slice(0, 4);
-  return `${WEEKDAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}${sameYear ? '' : `, ${d.getFullYear()}`}`;
+  const year = sameYear ? '' : getLang() === 'ar' ? ` ${d.getFullYear()}` : `, ${d.getFullYear()}`;
+  return getLang() === 'ar'
+    ? `${n.weekdays[d.getDay()]}، ${d.getDate()} ${n.months[d.getMonth()]}${year}`
+    : `${n.weekdays[d.getDay()]}, ${n.months[d.getMonth()]} ${d.getDate()}${year}`;
 }
 
 export function formatTime12(time: string): string {
   const [h, m] = time.split(':').map(Number);
-  const suffix = h >= 12 ? 'PM' : 'AM';
+  const suffix = h >= 12 ? names().pm : names().am;
   const h12 = h % 12 === 0 ? 12 : h % 12;
   return `${h12}:${pad(m)} ${suffix}`;
 }

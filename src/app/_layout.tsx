@@ -8,6 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DATABASE_NAME, migrate } from '../db/schema';
 import type { DB } from '../db/types';
 import { AppDataProvider } from '../hooks/useAppData';
+import { I18nProvider, useI18n } from '../i18n/I18nProvider';
 import { ThemeProvider, useTheme } from '../theme';
 
 // react-native-svg's touch handlers trigger a harmless React DOM warning in browser previews only.
@@ -28,6 +29,7 @@ function Themed({ children }: { children: ReactNode }) {
 
 function AppStack() {
   const { colors } = useTheme();
+  const { t, rtl } = useI18n();
   return (
     <Stack
       screenOptions={{
@@ -36,12 +38,12 @@ function AppStack() {
         headerTitleStyle: { fontWeight: '700' },
         headerShadowVisible: false,
         contentStyle: { backgroundColor: colors.bg },
-        animation: 'slide_from_right',
+        animation: rtl ? 'slide_from_left' : 'slide_from_right',
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="settings" options={{ title: 'Settings' }} />
-      <Stack.Screen name="categories" options={{ title: 'Expense categories' }} />
+      <Stack.Screen name="settings" options={{ title: t('Settings') }} />
+      <Stack.Screen name="categories" options={{ title: t('Expense categories') }} />
     </Stack>
   );
 }
@@ -53,11 +55,13 @@ export default function RootLayout() {
       <SQLiteProvider databaseName={DATABASE_NAME} onInit={(db) => migrate(db as unknown as DB)}>
         <AppDataProvider>
           {(settings) => (
-            <ThemeProvider preference={settings.theme}>
-              <Themed>
-                <AppStack />
-              </Themed>
-            </ThemeProvider>
+            <I18nProvider preference={settings.language}>
+              <ThemeProvider preference={settings.theme}>
+                <Themed>
+                  <AppStack key={settings.language} />
+                </Themed>
+              </ThemeProvider>
+            </I18nProvider>
           )}
         </AppDataProvider>
       </SQLiteProvider>
